@@ -8,7 +8,7 @@ Steps 1-2 are implemented in this repo and must not own Dropbox messy ingest or 
 | 2. Relationship Knowledge Graph | this track | READ people, orgs, relationships. Draw the full map. | Filter by goal. Rank people. Wipe SQLite. Index Elastic. |
 | 3. Dynamic graph based on goal | teammates | Read `goal_plans` + the same SQLite rows. Implement `backend/app/pipeline/goal_view.py`. | Change the Goal → Network agent. |
 | 4. Dropbox messy-data ingest | teammates | List/download files from `/inbox/` (or similar). Implement `pipeline/dropbox_ingest.py`. | Use `/network/*.json` demo loader as the ingest path. Wipe `goals`. |
-| 5. Entity extraction | teammates | Parse files into entities. INSERT/UPDATE people, orgs, relationships. Implement `pipeline/extract.py`. | Delete the whole network on app startup. |
+| 5. Entity extraction | this repo now has a starter | `POST /pipeline/extract` calls Terra and upserts SQLite. Fill Dropbox file listing in `dropbox_ingest.py`. | Delete the whole network on app startup. |
 | 6. Elasticsearch | teammates | Index copies for search. Implement `pipeline/elastic.py`. | Make steps 1-2 depend on Elastic being up. |
 
 ## Shared SQLite contract
@@ -31,5 +31,6 @@ App startup **never** pulls Dropbox. It only seeds sample JSON when people/orgs 
 
 - `POST /agents/goal-network` and `GET /agents/goal-network/{id}` — goal plan
 - `GET /graph` — full unfiltered map
+- `POST /pipeline/extract` — messy text → Terra → upsert people/orgs/relationships
 
 Do not add Dropbox or Elastic calls inside `backend/app/agents/`.

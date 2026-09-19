@@ -77,7 +77,7 @@ npm run dev
 
 Open http://localhost:5173
 
-See `TEAM.md` before adding Dropbox or Elastic code. This track does not ingest messy files and will not overwrite a network that already has rows.
+See `TEAM.md` for Dropbox/Elastic ownership. `POST /pipeline/extract` can turn messy text into SQLite rows without wiping the graph.
 
 ## API
 
@@ -89,4 +89,4 @@ See `TEAM.md` before adding Dropbox or Elastic code. This track does not ingest 
 | GET | `/agents/knowledge-graph` | Full relationship map (no goal filter) |
 | GET | `/graph` | Same map, used by the frontend |
 | POST | `/sync/dropbox` | Demo JSON only; 409 if SQLite already has a network |
-| POST | `/sync/sample` | Local sample only; 409 if SQLite already has a network |
+| POST | `/pipeline/extract` | Messy text → Terra → upsert people/orgs/relationships |
