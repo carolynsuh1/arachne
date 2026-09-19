@@ -3,7 +3,7 @@ import { fetchGraph } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
 import type { GraphNodeData, GraphResponse } from "../types"
 
-export function GraphPage() {
+export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:string})=>void}) {
   const [graph, setGraph] = useState<GraphResponse | null>(null)
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(
     null,
@@ -58,6 +58,7 @@ export function GraphPage() {
               <p className="mt-3 text-sm text-stone-700">
                 {selected.bio || selected.description || "No description yet."}
               </p>
+              {selected.kind === "person" && <button className="mt-4 rounded-full bg-stone-900 px-4 py-2 text-sm text-white" onClick={()=>onResearch({id:selected.id.replace(/^person:/,""),name:selected.name})}>Prepare coffee chat</button>}
               {selected.interests?.length ? (
                 <p className="mt-4 font-sans text-sm">
                   Interests: {selected.interests.join(", ")}

@@ -3,9 +3,13 @@ import { GoalPage } from "./pages/GoalPage"
 import { GraphPage } from "./pages/GraphPage"
 import type { GoalNetworkResult } from "./types"
 
-type Page = "goal" | "graph"
+import { ResearchPage } from "./pages/ResearchPage"
+import type { ResearchTarget } from "./pages/ResearchPage"
+
+type Page = "goal" | "graph" | "research"
 
 export default function App() {
+  const [target, setTarget] = useState<ResearchTarget | undefined>()
   const [page, setPage] = useState<Page>("goal")
   const [plan, setPlan] = useState<GoalNetworkResult | null>(null)
 
@@ -28,6 +32,7 @@ export default function App() {
           >
             Knowledge graph
           </button>
+          <button onClick={() => {setTarget(undefined);setPage("research")}} className={`rounded-full px-4 py-1.5 ${page === "research" ? "bg-stone-900 text-white" : "text-stone-700"}`}>Research</button>
         </nav>
       </header>
       <main className="px-6 py-10">
@@ -37,8 +42,10 @@ export default function App() {
             onAnalyzed={setPlan}
             onOpenGraph={() => setPage("graph")}
           />
+        ) : page === "research" ? (
+          <ResearchPage key={target?.id ?? "search"} target={target} goal={plan?.goal.text} />
         ) : (
-          <GraphPage />
+          <GraphPage onResearch={(person)=>{setTarget(person);setPage("research")}} />
         )}
       </main>
     </div>

@@ -63,3 +63,11 @@ class SyncState(Base):
     source: Mapped[str] = mapped_column(String, default="seed")
     detail: Mapped[str] = mapped_column(Text, default="")
     synced_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ResearchBrief(Base):
+    __tablename__ = "research_briefs"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    result_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
