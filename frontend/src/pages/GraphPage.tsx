@@ -24,10 +24,10 @@ export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:strin
         <p className="font-sans text-sm tracking-wide text-stone-500 uppercase">
           Relationship Knowledge Graph
         </p>
-        <h1 className="mt-2 text-4xl leading-tight">Your contacts are a map</h1>
+        <h1 className="mt-2 text-4xl leading-tight">Who can introduce you</h1>
         <p className="mt-2 max-w-2xl text-stone-700">
-          Full network from SQLite. Goal-specific views and Elastic search
-          are owned by teammates and are not run from this page.
+          Every name is a person in your network. A line means that person can
+          recommend you chat with the person on the other end.
         </p>
       </div>
       {graph ? (
@@ -71,7 +71,7 @@ export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:strin
               ) : null}
             </>
           ) : (
-            <p className="text-stone-600">Select a person or organization.</p>
+            <p className="text-stone-600">Select a person.</p>
           )}
         </aside>
       </div>

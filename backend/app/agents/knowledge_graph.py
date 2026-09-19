@@ -1,126 +1,82 @@
-"""Step 2 only: draw the stored network as a map.
+"""Step 2 only: draw the stored people as a map of chat recommendations.
+
+Nodes are people. An edge means the source person is someone who can
+recommend you chat with the target person.
 
 Do not filter or rank by goal here (step 3).
 Do not extract entities here (step 4).
 Do not query Elasticsearch here (step 5).
 
-This module only READs people, organizations, relationships, and goals from SQLite.
+This module only READs people and relationships from SQLite.
 It does not hide or rank contacts for a selected goal.
 """
 
 import json
 import math
-import re
 
 from sqlalchemy.orm import Session
 
-from ..models import Goal, Organization, Person, Relationship, SyncState
+from ..models import Person, Relationship, SyncState
 from ..schemas import GraphEdge, GraphEdgeData, GraphNode, GraphNodeData, GraphOut
+
+# A person card is at most this big on screen. The layout keeps every pair of
+# cards farther apart than this, so no two names can overlap.
+CARD_WIDTH = 240.0
+CARD_HEIGHT = 80.0
+CARD_GAP = 40.0
+MIN_RADIUS = 280.0
 
 
 def build_graph(db: Session) -> GraphOut:
-    people = db.query(Person).all()
-    orgs = db.query(Organization).all()
+    people = db.query(Person).order_by(Person.name).all()
     rels = db.query(Relationship).all()
-    goals = db.query(Goal).order_by(Goal.created_at.desc()).limit(8).all()
     state = db.get(SyncState, 1)
 
-    nodes: list[GraphNode] = []
-    edges: list[GraphEdge] = []
-
-    goal_positions = _positions(len(goals), 480, -40, 180)
-    for index, goal in enumerate(goals):
-        nodes.append(
-            GraphNode(
-                id=_node_id("goal", goal.id),
-                type="goal",
-                position=goal_positions[index],
-                data=GraphNodeData(
-                    kind="goal",
-                    name="Goal",
-                    description=goal.text,
-                ),
-            )
-        )
-
-    interests = _unique_interests(people)
-    interest_positions = _positions(len(interests), 480, 140, 220)
-    for index, (slug, interest) in enumerate(interests.items()):
-        nodes.append(
-            GraphNode(
-                id=_node_id("interest", slug),
-                type="interest",
-                position=interest_positions[index],
-                data=GraphNodeData(kind="interest", name=interest),
-            )
-        )
-
-    org_positions = _positions(len(orgs), 160, 380, 170)
-    for index, org in enumerate(orgs):
-        nodes.append(
-            GraphNode(
-                id=_node_id("organization", org.id),
-                type="organization",
-                position=org_positions[index],
-                data=GraphNodeData(
-                    kind="organization",
-                    name=org.name,
-                    org_type=org.type,
-                    description=org.description,
-                ),
-            )
-        )
-
-    person_positions = _positions(len(people), 800, 400, 250)
-    for index, person in enumerate(people):
-        nodes.append(
-            GraphNode(
-                id=_node_id("person", person.id),
-                type="person",
-                position=person_positions[index],
-                data=GraphNodeData(
-                    kind="person",
-                    name=person.name,
-                    bio=person.bio,
-                    interests=json.loads(person.interests or "[]"),
-                    skills=json.loads(person.skills or "[]"),
-                ),
-            )
-        )
-
-    edges.extend(
-        GraphEdge(
-            id=rel.id,
-            source=_node_id(rel.source_type, rel.source_id),
-            target=_node_id(rel.target_type, rel.target_id),
-            label=rel.type.replace("_", " "),
-            data=GraphEdgeData(
-                type=rel.type,
-                strength=rel.strength,
-                evidence=rel.evidence,
+    positions = _ring_positions(len(people))
+    nodes = [
+        GraphNode(
+            id=_node_id(person.id),
+            type="person",
+            position=positions[index],
+            data=GraphNodeData(
+                kind="person",
+                name=person.name,
+                bio=person.bio,
+                interests=json.loads(person.interests or "[]"),
+                skills=json.loads(person.skills or "[]"),
             ),
         )
-        for rel in rels
-    )
+        for index, person in enumerate(people)
+    ]
 
-    for person in people:
-        for interest in json.loads(person.interests or "[]"):
-            slug = _slug(interest)
-            if slug not in interests:
-                continue
-            edges.append(
-                GraphEdge(
-                    id=f"int-{person.id}-{slug}",
-                    source=_node_id("person", person.id),
-                    target=_node_id("interest", slug),
-                    label="interested in",
-                    data=GraphEdgeData(
-                        type="interested_in",
-                        strength=0.55,
-                        evidence=f"{person.name} lists {interest}.",
-                    ),
-                )
+    known_ids = {node.id for node in nodes}
+    edges: list[GraphEdge] = []
+    linked_pairs: set[frozenset[str]] = set()
+
+    for rel in rels:
+        if rel.source_type != "person" or rel.target_type != "person":
+            continue
+        source = _node_id(rel.source_id)
+        target = _node_id(rel.target_id)
+        if source == target or source not in known_ids or target not in known_ids:
+            continue
+        pair = frozenset((source, target))
+        if pair in linked_pairs:
+            continue
+        linked_pairs.add(pair)
+        edges.append(
+            GraphEdge(
+                id=rel.id,
+                source=source,
+                target=target,
+                label="recommends chat",
+                data=GraphEdgeData(
+                    type=rel.type,
+                    strength=rel.strength,
+                    evidence=rel.evidence,
+                ),
             )
+        )
 
     return GraphOut(
         nodes=nodes,
@@ -132,33 +88,27 @@ def build_graph(db: Session) -> GraphOut:
     )
 
 
-def _node_id(entity_type: str, entity_id: str) -> str:
-    return f"{entity_type}:{entity_id}"
+def _node_id(person_id: str) -> str:
+    return f"person:{person_id}"
 
 
-def _slug(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+def _ring_positions(count: int) -> list[dict[str, float]]:
+    """Place people on one circle wide enough that no two cards can touch.
 
-
-def _unique_interests(people: list[Person]) -> dict[str, str]:
-    seen: dict[str, str] = {}
-    for person in people:
-        for interest in json.loads(person.interests or "[]"):
-            slug = _slug(interest)
-            if slug and slug not in seen:
-                seen[slug] = interest
-    return seen
-
-
-def _positions(count: int, origin_x: float, origin_y: float, radius: float) -> list[dict[str, float]]:
+    Adjacent cards sit at least CARD_WIDTH + CARD_GAP apart along the circle,
+    which is farther than the diagonal of a card, so nothing overlaps.
+    """
     if count == 0:
         return []
     if count == 1:
-        return [{"x": origin_x, "y": origin_y}]
+        return [{"x": 0.0, "y": 0.0}]
+
+    spacing = CARD_WIDTH + CARD_GAP
+    radius = max(MIN_RADIUS, (count * spacing) / (2 * math.pi))
     return [
         {
-            "x": origin_x + radius * math.cos((2 * math.pi * index) / count),
-            "y": origin_y + radius * math.sin((2 * math.pi * index) / count),
+            "x": radius * math.cos((2 * math.pi * index) / count),
+            "y": radius * math.sin((2 * math.pi * index) / count),
         }
         for index in range(count)
     ]
