@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "mappings": {
+      "properties": {
+        "entity_id": { "type": "keyword" },
+        "type": { "type": "keyword" },
+        "name": {
+          "type": "text",
+          "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+        },
+        "normalized_name": { "type": "keyword" },
+        "aliases": { "type": "keyword" },
+        "role": { "type": "text" },
+        "org": { "type": "keyword" },
+        "location": { "type": "text" },
+        "description": { "type": "text" },
+        "interests": { "type": "keyword" },
+        "skills": { "type": "keyword" },
+        "source_docs": { "type": "keyword" },
+        "created_at": { "type": "date" },
+        "updated_at": { "type": "date" },
+        "embedding": {
+          "type": "dense_vector",
+          "dims": 1536,
+          "index": true,
+          "similarity": "cosine"
+        }
+      }
+    }
+  },
+  "relationships": {
+    "mappings": {
+      "properties": {
+        "relationship_id": { "type": "keyword" },
+        "type": { "type": "keyword" },
+        "from_id": { "type": "keyword" },
+        "from_name": { "type": "keyword" },
+        "to_id": { "type": "keyword" },
+        "to_name": { "type": "keyword" },
+        "source_doc": { "type": "keyword" },
+        "date": { "type": "keyword" },
+        "confidence": { "type": "float" }
+      }
+    }
+  },
+  "interactions": {
+    "mappings": {
+      "properties": {
+        "interaction_id": { "type": "keyword" },
+        "person_id": { "type": "keyword" },
+        "person_name": { "type": "keyword" },
+        "date": { "type": "keyword" },
+        "summary": { "type": "text" },
+        "next_steps": { "type": "text" },
+        "source_doc": { "type": "keyword" },
+        "embedding": {
+          "type": "dense_vector",
+          "dims": 1536,
+          "index": true,
+          "similarity": "cosine"
+        }
+      }
+    }
+  }
+}

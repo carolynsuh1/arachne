@@ -1,0 +1,190 @@
+{
+  "entities": {
+    "Person": [
+      {
+        "name": "Wei Zhang",
+        "role": "PhD Candidate",
+        "org": "UC Davis",
+        "location": "Davis, CA",
+        "interests": [
+          "lower-limb exoskeletons",
+          "gait rehabilitation",
+          "assistive robotics"
+        ],
+        "skills": [],
+        "source_doc": "sample_doc_3_contacts_export.txt"
+      },
+      {
+        "name": "Sangbae Kim",
+        "role": "Professor, Director of Biomimetic Robotics Lab",
+        "org": "MIT",
+        "location": "Cambridge, MA",
+        "interests": [
+          "legged robots",
+          "actuator design",
+          "bio-inspired mechanisms"
+        ],
+        "skills": [],
+        "source_doc": "sample_doc_3_contacts_export.txt"
+      },
+      {
+        "name": "Carlos Reyes",
+        "role": "R&D Engineer",
+        "org": "Ossur",
+        "location": "Foothill Ranch, CA",
+        "interests": [
+          "prosthetic foot design"
+        ],
+        "skills": [
+          "mechanical engineering"
+        ],
+        "source_doc": "sample_doc_3_contacts_export.txt"
+      }
+    ],
+    "Organization": [
+      {
+        "name": "UC Davis",
+        "type": "University",
+        "domain": "Academia"
+      },
+      {
+        "name": "MIT",
+        "type": "University",
+        "domain": "Academia"
+      },
+      {
+        "name": "Ossur",
+        "type": "Company",
+        "domain": "Prosthetics / Medical Devices"
+      },
+      {
+        "name": "Hartnell College",
+        "type": "College",
+        "domain": "Academia"
+      }
+    ],
+    "Project": [
+      {
+        "name": "Biomechanics Lab",
+        "description": "Research lab focused on lower-limb exoskeletons and gait rehabilitation",
+        "org": "UC Davis"
+      },
+      {
+        "name": "Biomimetic Robotics Lab",
+        "description": "Research lab focused on legged robots, actuator design, and bio-inspired mechanisms",
+        "org": "MIT"
+      }
+    ],
+    "Interest": [
+      {
+        "name": "lower-limb exoskeletons"
+      },
+      {
+        "name": "gait rehabilitation"
+      },
+      {
+        "name": "assistive robotics"
+      },
+      {
+        "name": "legged robots"
+      },
+      {
+        "name": "actuator design"
+      },
+      {
+        "name": "bio-inspired mechanisms"
+      },
+      {
+        "name": "prosthetic foot design"
+      }
+    ],
+    "Skill": [
+      {
+        "name": "mechanical engineering"
+      }
+    ],
+    "Interaction": []
+  },
+  "relationships": [
+    {
+      "type": "member_of",
+      "from": "Wei Zhang",
+      "to": "UC Davis"
+    },
+    {
+      "type": "worked_on",
+      "from": "Wei Zhang",
+      "to": "Biomechanics Lab"
+    },
+    {
+      "type": "interested_in",
+      "from": "Wei Zhang",
+      "to": "lower-limb exoskeletons"
+    },
+    {
+      "type": "interested_in",
+      "from": "Wei Zhang",
+      "to": "gait rehabilitation"
+    },
+    {
+      "type": "interested_in",
+      "from": "Wei Zhang",
+      "to": "assistive robotics"
+    },
+    {
+      "type": "member_of",
+      "from": "Sangbae Kim",
+      "to": "MIT"
+    },
+    {
+      "type": "worked_on",
+      "from": "Sangbae Kim",
+      "to": "Biomimetic Robotics Lab"
+    },
+    {
+      "type": "interested_in",
+      "from": "Sangbae Kim",
+      "to": "legged robots"
+    },
+    {
+      "type": "interested_in",
+      "from": "Sangbae Kim",
+      "to": "actuator design"
+    },
+    {
+      "type": "interested_in",
+      "from": "Sangbae Kim",
+      "to": "bio-inspired mechanisms"
+    },
+    {
+      "type": "member_of",
+      "from": "Carlos Reyes",
+      "to": "Ossur"
+    },
+    {
+      "type": "member_of",
+      "from": "Carlos Reyes",
+      "to": "Hartnell College"
+    },
+    {
+      "type": "interested_in",
+      "from": "Carlos Reyes",
+      "to": "prosthetic foot design"
+    },
+    {
+      "type": "has_skill",
+      "from": "Carlos Reyes",
+      "to": "mechanical engineering"
+    },
+    {
+      "type": "affiliated_with",
+      "from": "Biomechanics Lab",
+      "to": "UC Davis"
+    },
+    {
+      "type": "affiliated_with",
+      "from": "Biomimetic Robotics Lab",
+      "to": "MIT"
+    }
+  ]
+}

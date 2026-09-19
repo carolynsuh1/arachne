@@ -1,0 +1,285 @@
+{
+  "entities": {
+    "Person": [
+      {
+        "name": "Maria Chen",
+        "role": "Club Member",
+        "org": "Robotics Club",
+        "location": "De Anza",
+        "interests": [
+          "exoskeleton arm",
+          "servo control",
+          "PID tuning"
+        ],
+        "skills": [
+          "mechanical engineering",
+          "PID tuning",
+          "servo control"
+        ],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      },
+      {
+        "name": "Devon Park",
+        "role": "Club Member",
+        "org": "Robotics Club",
+        "location": "",
+        "interests": [
+          "gesture-based control",
+          "wheelchair accessibility",
+          "HackMIT"
+        ],
+        "skills": [],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      },
+      {
+        "name": "Ms. Alvarez",
+        "role": "Advisor",
+        "org": "Robotics Club",
+        "location": "",
+        "interests": [],
+        "skills": [],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      },
+      {
+        "name": "Wei Zhang",
+        "role": "Grad Student",
+        "org": "UC Davis biomechanics lab",
+        "location": "UC Davis",
+        "interests": [
+          "biomechanics"
+        ],
+        "skills": [],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      },
+      {
+        "name": "Carlos Reyes",
+        "role": "Alumni / R&D Engineer",
+        "org": "Ossur",
+        "location": "",
+        "interests": [
+          "prosthetic foot R&D"
+        ],
+        "skills": [
+          "prosthetics R&D"
+        ],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      },
+      {
+        "name": "Jason O",
+        "role": "Club Member",
+        "org": "Robotics Club",
+        "location": "",
+        "interests": [],
+        "skills": [],
+        "source_doc": "sample_doc_2_club_notes.txt"
+      }
+    ],
+    "Organization": [
+      {
+        "name": "Robotics Club",
+        "type": "Student Club",
+        "domain": "Robotics / Engineering"
+      },
+      {
+        "name": "UC Davis biomechanics lab",
+        "type": "Academic Research Lab",
+        "domain": "Biomechanics"
+      },
+      {
+        "name": "De Anza",
+        "type": "Educational Institution",
+        "domain": "Higher Education"
+      },
+      {
+        "name": "Ossur",
+        "type": "Company",
+        "domain": "Medical Devices / Prosthetics"
+      },
+      {
+        "name": "HackMIT",
+        "type": "Hackathon",
+        "domain": "Technology / Engineering"
+      }
+    ],
+    "Project": [
+      {
+        "name": "Exoskeleton Arm Project",
+        "description": "Development of an exoskeleton arm with servo control loop using PID tuning",
+        "org": "Robotics Club"
+      },
+      {
+        "name": "Gesture-Based Wheelchair Control",
+        "description": "Gesture-based control system for wheelchairs, submitted to HackMIT",
+        "org": "HackMIT"
+      }
+    ],
+    "Interest": [
+      {
+        "name": "Exoskeleton / Assistive Devices"
+      },
+      {
+        "name": "PID Tuning"
+      },
+      {
+        "name": "Gesture-Based Control"
+      },
+      {
+        "name": "Prosthetics R&D"
+      },
+      {
+        "name": "Biomechanics"
+      }
+    ],
+    "Skill": [
+      {
+        "name": "Mechanical Engineering"
+      },
+      {
+        "name": "PID Tuning"
+      },
+      {
+        "name": "Servo Control"
+      },
+      {
+        "name": "Prosthetics R&D"
+      }
+    ],
+    "Interaction": [
+      {
+        "person": "Maria Chen",
+        "date": "9/12",
+        "summary": "Gave update on exoskeleton arm project; mentioned servo control loop and PID tuning work; offered connection to Wei Zhang at UC Davis biomechanics lab",
+        "next_steps": "Reach out to Wei Zhang about a lab tour"
+      },
+      {
+        "person": "Devon Park",
+        "date": "9/12",
+        "summary": "Brought up HackMIT deadline; submitted application for gesture-based wheelchair control project",
+        "next_steps": "Follow up with Devon on HackMIT project for possible collaboration ideas"
+      },
+      {
+        "person": "Ms. Alvarez",
+        "date": "9/12",
+        "summary": "Mentioned alum Carlos Reyes working at Ossur in prosthetic foot R&D; offered to make introduction for internship conversations",
+        "next_steps": "Look into Ossur; request introduction to Carlos Reyes if interested in internship"
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "type": "member_of",
+      "from": "Maria Chen",
+      "to": "Robotics Club"
+    },
+    {
+      "type": "member_of",
+      "from": "Devon Park",
+      "to": "Robotics Club"
+    },
+    {
+      "type": "member_of",
+      "from": "Ms. Alvarez",
+      "to": "Robotics Club"
+    },
+    {
+      "type": "member_of",
+      "from": "Jason O",
+      "to": "Robotics Club"
+    },
+    {
+      "type": "member_of",
+      "from": "Wei Zhang",
+      "to": "UC Davis biomechanics lab"
+    },
+    {
+      "type": "member_of",
+      "from": "Carlos Reyes",
+      "to": "Ossur"
+    },
+    {
+      "type": "worked_on",
+      "from": "Maria Chen",
+      "to": "Exoskeleton Arm Project"
+    },
+    {
+      "type": "worked_on",
+      "from": "Devon Park",
+      "to": "Gesture-Based Wheelchair Control"
+    },
+    {
+      "type": "affiliated_with",
+      "from": "Exoskeleton Arm Project",
+      "to": "Robotics Club"
+    },
+    {
+      "type": "affiliated_with",
+      "from": "Gesture-Based Wheelchair Control",
+      "to": "HackMIT"
+    },
+    {
+      "type": "interested_in",
+      "from": "Maria Chen",
+      "to": "Exoskeleton / Assistive Devices"
+    },
+    {
+      "type": "interested_in",
+      "from": "Maria Chen",
+      "to": "PID Tuning"
+    },
+    {
+      "type": "interested_in",
+      "from": "Devon Park",
+      "to": "Gesture-Based Control"
+    },
+    {
+      "type": "interested_in",
+      "from": "Carlos Reyes",
+      "to": "Prosthetics R&D"
+    },
+    {
+      "type": "interested_in",
+      "from": "Wei Zhang",
+      "to": "Biomechanics"
+    },
+    {
+      "type": "has_skill",
+      "from": "Maria Chen",
+      "to": "Mechanical Engineering"
+    },
+    {
+      "type": "has_skill",
+      "from": "Maria Chen",
+      "to": "PID Tuning"
+    },
+    {
+      "type": "has_skill",
+      "from": "Maria Chen",
+      "to": "Servo Control"
+    },
+    {
+      "type": "has_skill",
+      "from": "Carlos Reyes",
+      "to": "Prosthetics R&D"
+    },
+    {
+      "type": "knows",
+      "from": "Maria Chen",
+      "to": "Wei Zhang"
+    },
+    {
+      "type": "knows",
+      "from": "Ms. Alvarez",
+      "to": "Carlos Reyes"
+    },
+    {
+      "type": "introduced_by",
+      "from": "Wei Zhang",
+      "to": "Maria Chen"
+    },
+    {
+      "type": "introduced_by",
+      "from": "Carlos Reyes",
+      "to": "Ms. Alvarez"
+    }
+  ]
+}
