@@ -34,6 +34,9 @@ export type GraphNodeData = {
   relevant?: boolean
   why?: string | null
   score?: number | null
+  location?: string | null
+  companies?: string[]
+  affiliations?: string[]
 }
 
 export type GraphNode = {
@@ -79,4 +82,29 @@ export type SyncResponse = {
   organizations: number
   relationships: number
   synced_at: string
+}
+
+export type TrackerPerson = {
+  id: string
+  name: string
+  bio: string
+  location: string
+  companies: string[]
+  clubs: string[]
+  organizations: string[]
+}
+
+export type TrackerGroup = {
+  name: string
+  kind: string
+  count: number
+  people: string[]
+}
+
+export type NetworkTracker = {
+  people: TrackerPerson[]
+  companies: TrackerGroup[]
+  clubs: TrackerGroup[]
+  organizations: TrackerGroup[]
+  locations: TrackerGroup[]
 }

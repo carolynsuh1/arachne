@@ -45,6 +45,9 @@ class GraphNodeData(BaseModel):
     relevant: bool = False
     why: str | None = None
     score: float | None = None
+    location: str | None = None
+    companies: list[str] = []
+    affiliations: list[str] = []
 
 
 class GraphNode(BaseModel):
@@ -92,3 +95,28 @@ class SyncOut(BaseModel):
     organizations: int
     relationships: int
     synced_at: datetime
+
+
+class TrackerPersonOut(BaseModel):
+    id: str
+    name: str
+    bio: str
+    location: str
+    companies: list[str] = []
+    clubs: list[str] = []
+    organizations: list[str] = []
+
+
+class TrackerGroupOut(BaseModel):
+    name: str
+    kind: str
+    count: int
+    people: list[str]
+
+
+class NetworkTrackerOut(BaseModel):
+    people: list[TrackerPersonOut]
+    companies: list[TrackerGroupOut]
+    clubs: list[TrackerGroupOut]
+    organizations: list[TrackerGroupOut]
+    locations: list[TrackerGroupOut]

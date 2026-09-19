@@ -10,7 +10,7 @@ import re
 
 from sqlalchemy.orm import Session
 
-from ..models import Organization, Person, Relationship
+from ..models import Organization, Person, PersonProfile, Relationship
 from .llm import call_terra, parse_json_object
 
 EXTRACT_PROMPT = """
@@ -23,10 +23,11 @@ Rules:
 - source_type and target_type must be "person" or "organization".
 - relationship type must be one of: knows, friend_of, member_of, works_at, researches, interested_in, introduced_by, worked_with, worked_on.
 - interests and skills are arrays of short strings.
+- location is the most specific geographic area clearly stated for the person.
 
 Return JSON only, no markdown, matching:
 {
-  "people": [{"id": "", "name": "", "bio": "", "interests": [], "skills": []}],
+  "people": [{"id": "", "name": "", "bio": "", "interests": [], "skills": [], "location": ""}],
   "organizations": [{"id": "", "name": "", "type": "lab|club|company|university|resource", "description": ""}],
   "relationships": [{
     "id": "",
@@ -85,6 +86,7 @@ def _normalize(parsed: dict, source_doc: str) -> dict:
                 "bio": str(item.get("bio") or "").strip(),
                 "interests": _str_list(item.get("interests")),
                 "skills": _str_list(item.get("skills")),
+                "location": str(item.get("location") or "").strip(),
             }
         )
 
@@ -190,13 +192,19 @@ def _upsert_person(db: Session, person: dict) -> None:
                 skills=_as_json_list(person["skills"]),
             )
         )
-        return
-    if person["name"]:
-        row.name = person["name"]
-    if person["bio"] and len(person["bio"]) > len(row.bio or ""):
-        row.bio = person["bio"]
-    row.interests = _merge_lists(row.interests, person["interests"])
-    row.skills = _merge_lists(row.skills, person["skills"])
+    else:
+        if person["name"]:
+            row.name = person["name"]
+        if person["bio"] and len(person["bio"]) > len(row.bio or ""):
+            row.bio = person["bio"]
+        row.interests = _merge_lists(row.interests, person["interests"])
+        row.skills = _merge_lists(row.skills, person["skills"])
+
+    profile = db.get(PersonProfile, person["id"])
+    if profile is None:
+        db.add(PersonProfile(person_id=person["id"], location=person["location"]))
+    elif person["location"]:
+        profile.location = person["location"]
 
 
 def _upsert_org(db: Session, org: dict) -> None:

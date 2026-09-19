@@ -34,5 +34,11 @@
     "name": "BAIR undergrad research notes",
     "type": "resource",
     "description": "Shared notes on how students join BAIR labs and reading groups."
+  },
+  {
+    "id": "o-industry-ai",
+    "name": "Industry AI Lab",
+    "type": "company",
+    "description": "San Francisco company where Berkeley alumni work on applied AI research."
   }
 ]

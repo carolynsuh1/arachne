@@ -17,9 +17,24 @@ def load_sample_payload() -> dict:
 
 
 def seed_if_empty(db: Session) -> dict | None:
-    from .models import Person
+    from .models import Person, PersonProfile
 
     if db.query(Person).count() > 0:
+        sample_people = load_sample_payload()["people"]
+        existing_ids = {row.id for row in db.query(Person).all()}
+        changed = False
+        for person in sample_people:
+            person_id = str(person["id"])
+            if person_id in existing_ids and db.get(PersonProfile, person_id) is None:
+                db.add(
+                    PersonProfile(
+                        person_id=person_id,
+                        location=str(person.get("location") or ""),
+                    )
+                )
+                changed = True
+        if changed:
+            db.commit()
         return None
     return replace_network(
         db,

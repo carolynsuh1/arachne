@@ -16,6 +16,13 @@ class Person(Base):
     skills: Mapped[str] = mapped_column(Text, default="[]")
 
 
+class PersonProfile(Base):
+    __tablename__ = "person_profiles"
+
+    person_id: Mapped[str] = mapped_column(String, primary_key=True)
+    location: Mapped[str] = mapped_column(String, default="")
+
+
 class Organization(Base):
     __tablename__ = "organizations"
 

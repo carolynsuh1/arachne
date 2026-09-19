@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { GoalPage } from "./pages/GoalPage"
 import { GraphPage } from "./pages/GraphPage"
+import { NetworkDashboardPage } from "./pages/NetworkDashboardPage"
 import type { GoalNetworkResult } from "./types"
 
 import { ResearchPage } from "./pages/ResearchPage"
 import type { ResearchTarget } from "./pages/ResearchPage"
 
-type Page = "goal" | "graph" | "research"
+type Page = "goal" | "dashboard" | "graph" | "research"
 
 export default function App() {
   const [target, setTarget] = useState<ResearchTarget | undefined>()
@@ -18,6 +19,13 @@ export default function App() {
       <header className="flex flex-wrap items-center gap-4 border-b border-stone-300 px-6 py-4">
         <p className="text-xl">YourWeb</p>
         <nav className="flex gap-2 font-sans text-sm">
+          <button
+            type="button"
+            onClick={() => setPage("dashboard")}
+            className={`rounded-full px-4 py-1.5 ${page === "dashboard" ? "bg-stone-900 text-white" : "text-stone-700"}`}
+          >
+            Goal views
+          </button>
           <button
             type="button"
             onClick={() => setPage("goal")}
@@ -42,6 +50,8 @@ export default function App() {
             onAnalyzed={setPlan}
             onOpenGraph={() => setPage("graph")}
           />
+        ) : page === "dashboard" ? (
+          <NetworkDashboardPage onResearch={(person)=>{setTarget(person);setPage("research")}} />
         ) : page === "research" ? (
           <ResearchPage key={target?.id ?? "search"} target={target} goal={plan?.goal.text} />
         ) : (

@@ -168,5 +168,15 @@
     "type": "worked_on",
     "strength": 0.6,
     "evidence": "Luis maintains the undergrad research notes."
+  },
+  {
+    "id": "r18",
+    "source_type": "person",
+    "source_id": "p-priya",
+    "target_type": "organization",
+    "target_id": "o-industry-ai",
+    "type": "works_at",
+    "strength": 0.9,
+    "evidence": "Priya works at an industry AI lab in San Francisco."
   }
 ]

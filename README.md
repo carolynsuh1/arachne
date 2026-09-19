@@ -18,6 +18,11 @@ Instead of listing everyone you know, YourWeb starts from a goal and shows a rel
    - Reads SQLite only. Does not rank or hide people by goal.
    - SQLite is filled from `backend/sample_data/` on first boot, or by `POST /pipeline/extract`.
 
+3. **Goal Views Dashboard**
+   - Select any saved goal to generate a locally matched people graph.
+   - Sort people by name, company, or geographic area.
+   - Track companies, clubs, organizations, and location coverage.
+
 Entity extraction, Elastic, and goal-specific graph views live in `backend/app/pipeline/` and are documented in `TEAM.md`.
 
 There is no login and no deployment yet.
@@ -70,5 +75,7 @@ See `TEAM.md` for Elastic ownership. `POST /pipeline/extract` can turn messy tex
 | POST | `/agents/goal-network` | Decompose a goal into subgoals and needed connections |
 | GET | `/agents/knowledge-graph` | Full relationship map (no goal filter) |
 | GET | `/graph` | Same map, used by the frontend |
+| GET | `/goals/{id}/graph` | People graph locally matched to a saved goal |
+| GET | `/network/tracker` | People grouped by company, club, organization, and location |
 | POST | `/sync/sample` | Load local sample JSON; 409 if SQLite already has a network |
 | POST | `/pipeline/extract` | Messy text → Terra → upsert people/orgs/relationships |

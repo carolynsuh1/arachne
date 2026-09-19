@@ -1,0 +1,277 @@
+import { useEffect, useMemo, useState } from "react"
+import { fetchGoalGraph, fetchNetworkTracker, listGoals } from "../api"
+import { RelationshipGraph } from "../components/RelationshipGraph"
+import type {
+  Goal,
+  GraphNodeData,
+  GraphResponse,
+  NetworkTracker,
+  TrackerGroup,
+  TrackerPerson,
+} from "../types"
+
+type SortBy = "name" | "company" | "location"
+
+type Props = {
+  onResearch: (person: { id: string; name: string }) => void
+}
+
+export function NetworkDashboardPage({ onResearch }: Props) {
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [selectedGoalId, setSelectedGoalId] = useState("")
+  const [graph, setGraph] = useState<GraphResponse | null>(null)
+  const [tracker, setTracker] = useState<NetworkTracker | null>(null)
+  const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(null)
+  const [sortBy, setSortBy] = useState<SortBy>("name")
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    Promise.all([listGoals(), fetchNetworkTracker()])
+      .then(([savedGoals, trackerData]) => {
+        setGoals(savedGoals)
+        setTracker(trackerData)
+        setSelectedGoalId((current) => current || savedGoals[0]?.id || "")
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Could not load your dashboard.")
+      })
+  }, [])
+
+  useEffect(() => {
+    if (!selectedGoalId) {
+      return
+    }
+    fetchGoalGraph(selectedGoalId)
+      .then(setGraph)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Could not generate this goal view.")
+      })
+  }, [selectedGoalId])
+
+  function selectGoal(goalId: string) {
+    setSelectedGoalId(goalId)
+    setGraph(null)
+    setSelected(null)
+  }
+
+  const sortedPeople = useMemo(() => {
+    const people = [...(tracker?.people ?? [])]
+    return people.sort((left, right) => {
+      if (sortBy === "company") {
+        return compare(left.companies[0] || "zzzz", right.companies[0] || "zzzz")
+          || compare(left.name, right.name)
+      }
+      if (sortBy === "location") {
+        return compare(left.location || "zzzz", right.location || "zzzz")
+          || compare(left.name, right.name)
+      }
+      return compare(left.name, right.name)
+    })
+  }, [sortBy, tracker])
+
+  return (
+    <div className="space-y-8">
+      <header>
+        <p className="font-sans text-sm tracking-wide text-stone-500 uppercase">
+          Goal views
+        </p>
+        <h1 className="mt-2 text-4xl leading-tight">Your network, organized by intent</h1>
+        <p className="mt-2 max-w-3xl text-stone-700">
+          Pick a saved goal to generate its best people graph, then track where
+          your network works, gathers, and lives.
+        </p>
+      </header>
+
+      {error ? <p className="font-sans text-sm text-red-800">{error}</p> : null}
+
+      <section className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="rounded-xl border border-stone-300 bg-white p-4">
+          <h2 className="text-2xl">Saved goals</h2>
+          {goals.length ? (
+            <div className="mt-3 space-y-2">
+              {goals.map((goal) => (
+                <button
+                  key={goal.id}
+                  type="button"
+                  onClick={() => selectGoal(goal.id)}
+                  className={`w-full rounded-lg border p-3 text-left text-sm ${
+                    selectedGoalId === goal.id
+                      ? "border-stone-900 bg-stone-900 text-white"
+                      : "border-stone-200 bg-stone-50 text-stone-800"
+                  }`}
+                >
+                  {goal.text}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-stone-600">
+              Create a goal in the Goal agent first.
+            </p>
+          )}
+        </aside>
+
+        <div className="min-w-0">
+          {graph?.goal_id === selectedGoalId ? (
+            <>
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl">People for this goal</h2>
+                  <p className="font-sans text-sm text-stone-600">{graph.detail}</p>
+                </div>
+                <p className="font-sans text-sm text-stone-600">
+                  {graph.nodes.length} matches
+                </p>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+                <RelationshipGraph
+                  nodes={graph.nodes}
+                  edges={graph.edges}
+                  onSelect={setSelected}
+                />
+                <PersonDetail selected={selected} onResearch={onResearch} />
+              </div>
+            </>
+          ) : (
+            <div className="flex h-[70vh] items-center justify-center rounded-xl border border-dashed border-stone-400">
+              {selectedGoalId ? "Generating goal graph…" : "Choose or create a goal."}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="font-sans text-sm tracking-wide text-stone-500 uppercase">
+              Network tracker
+            </p>
+            <h2 className="mt-1 text-3xl">Coverage at a glance</h2>
+          </div>
+          <label className="font-sans text-sm">
+            Sort people by{" "}
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as SortBy)}
+              className="rounded-md border border-stone-300 bg-white px-3 py-2"
+            >
+              <option value="name">Name</option>
+              <option value="company">Company</option>
+              <option value="location">Geographic area</option>
+            </select>
+          </label>
+        </div>
+
+        {tracker ? (
+          <>
+            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <TrackerCard title="Companies" groups={tracker.companies} />
+              <TrackerCard title="Clubs" groups={tracker.clubs} />
+              <TrackerCard title="Organizations" groups={tracker.organizations} />
+              <TrackerCard title="Geographic areas" groups={tracker.locations} />
+            </div>
+            <PeopleList people={sortedPeople} />
+          </>
+        ) : (
+          <p className="mt-4 text-stone-600">Loading network tracker…</p>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function PersonDetail({
+  selected,
+  onResearch,
+}: {
+  selected: (GraphNodeData & { id: string }) | null
+  onResearch: Props["onResearch"]
+}) {
+  return (
+    <aside className="rounded-xl border border-stone-300 bg-white p-4">
+      {selected ? (
+        <>
+          <h3 className="text-2xl">{selected.name}</h3>
+          <p className="mt-2 font-sans text-sm text-stone-700">
+            {selected.why || selected.bio || "No match explanation yet."}
+          </p>
+          {selected.location ? (
+            <p className="mt-3 font-sans text-sm">Location: {selected.location}</p>
+          ) : null}
+          {selected.affiliations?.length ? (
+            <p className="mt-2 font-sans text-sm">
+              Organizations: {selected.affiliations.join(", ")}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() =>
+              onResearch({
+                id: selected.id.replace(/^person:/, ""),
+                name: selected.name,
+              })
+            }
+            className="mt-4 rounded-full bg-stone-900 px-4 py-2 font-sans text-sm text-white"
+          >
+            Prepare coffee chat
+          </button>
+        </>
+      ) : (
+        <p className="text-stone-600">Select a person to see why they match.</p>
+      )}
+    </aside>
+  )
+}
+
+function TrackerCard({ title, groups }: { title: string; groups: TrackerGroup[] }) {
+  return (
+    <article className="rounded-xl border border-stone-300 bg-white p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-xl">{title}</h3>
+        <span className="font-sans text-sm text-stone-500">{groups.length}</span>
+      </div>
+      <div className="mt-3 space-y-3">
+        {groups.length ? (
+          groups.map((group) => (
+            <div key={`${group.kind}-${group.name}`}>
+              <p className="font-sans text-sm font-medium">
+                {group.name} <span className="text-stone-500">({group.count})</span>
+              </p>
+              <p className="mt-0.5 text-xs text-stone-600">{group.people.join(", ")}</p>
+            </div>
+          ))
+        ) : (
+          <p className="font-sans text-sm text-stone-500">None tracked yet.</p>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function PeopleList({ people }: { people: TrackerPerson[] }) {
+  return (
+    <div className="mt-5 overflow-hidden rounded-xl border border-stone-300 bg-white">
+      <div className="grid grid-cols-[minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)] gap-3 border-b border-stone-200 bg-stone-100 px-4 py-2 font-sans text-xs tracking-wide text-stone-500 uppercase">
+        <span>Person</span>
+        <span>Company</span>
+        <span>Geographic area</span>
+      </div>
+      {people.map((person) => (
+        <div
+          key={person.id}
+          className="grid grid-cols-[minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)] gap-3 border-b border-stone-100 px-4 py-3 text-sm last:border-0"
+        >
+          <span>{person.name}</span>
+          <span className="font-sans text-stone-600">
+            {person.companies.join(", ") || "—"}
+          </span>
+          <span className="font-sans text-stone-600">{person.location || "Unknown"}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function compare(left: string, right: string) {
+  return left.localeCompare(right, undefined, { sensitivity: "base" })
+}

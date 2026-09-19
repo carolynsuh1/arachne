@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from .models import Organization, Person, Relationship, SyncState
+from .models import Organization, Person, PersonProfile, Relationship, SyncState
 
 
 class NetworkNotEmpty(Exception):
@@ -51,6 +51,7 @@ def replace_network(
         )
 
     db.query(Relationship).delete()
+    db.query(PersonProfile).delete()
     db.query(Person).delete()
     db.query(Organization).delete()
 
@@ -62,6 +63,12 @@ def replace_network(
                 bio=person.get("bio") or "",
                 interests=_as_json_list(person.get("interests")),
                 skills=_as_json_list(person.get("skills")),
+            )
+        )
+        db.add(
+            PersonProfile(
+                person_id=str(person["id"]),
+                location=str(person.get("location") or ""),
             )
         )
 

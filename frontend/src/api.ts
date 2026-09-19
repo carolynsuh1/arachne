@@ -1,4 +1,10 @@
-import type { Goal, GoalNetworkResult, GraphResponse, SyncResponse } from "./types"
+import type {
+  Goal,
+  GoalNetworkResult,
+  GraphResponse,
+  NetworkTracker,
+  SyncResponse,
+} from "./types"
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000"
 
@@ -45,6 +51,14 @@ export function listGoals() {
 
 export function fetchGraph() {
   return request<GraphResponse>("/graph")
+}
+
+export function fetchGoalGraph(goalId: string) {
+  return request<GraphResponse>(`/goals/${encodeURIComponent(goalId)}/graph`)
+}
+
+export function fetchNetworkTracker() {
+  return request<NetworkTracker>("/network/tracker")
 }
 
 export function syncFromSample() {

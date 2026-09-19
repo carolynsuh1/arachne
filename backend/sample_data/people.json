@@ -4,55 +4,63 @@
     "name": "Maya Chen",
     "bio": "Berkeley undergrad exploring AI research labs and looking for a first research project.",
     "interests": ["AI research", "NLP", "mentorship"],
-    "skills": ["Python", "PyTorch"]
+    "skills": ["Python", "PyTorch"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-anjali",
     "name": "Anjali Rao",
     "bio": "EECS PhD student in BAIR working on language models and research onboarding.",
     "interests": ["language models", "mentorship", "BAIR"],
-    "skills": ["NLP", "research writing"]
+    "skills": ["NLP", "research writing"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-jordan",
     "name": "Jordan Park",
     "bio": "Postdoc at Berkeley working on computer vision and collaborating across BAIR labs.",
     "interests": ["computer vision", "multimodal AI"],
-    "skills": ["vision", "experiment design"]
+    "skills": ["vision", "experiment design"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-pieter",
     "name": "Pieter Abbeel",
     "bio": "Berkeley faculty and BAIR researcher focused on robot learning and deep RL.",
     "interests": ["robot learning", "deep RL"],
-    "skills": ["advising", "robotics"]
+    "skills": ["advising", "robotics"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-sergey",
     "name": "Sergey Levine",
     "bio": "Berkeley faculty working on reinforcement learning and decision making.",
     "interests": ["reinforcement learning", "robotics"],
-    "skills": ["RL", "advising"]
+    "skills": ["RL", "advising"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-dawn",
     "name": "Dawn Song",
     "bio": "Berkeley faculty working on AI security, privacy, and trustworthy machine learning.",
     "interests": ["AI security", "trustworthy ML"],
-    "skills": ["security", "advising"]
+    "skills": ["security", "advising"],
+    "location": "Berkeley, CA"
   },
   {
     "id": "p-priya",
     "name": "Priya Shah",
     "bio": "Berkeley alum now at an AI lab. Still introduces students into BAIR reading groups.",
     "interests": ["industry research", "alumni mentoring"],
-    "skills": ["referrals", "research engineering"]
+    "skills": ["referrals", "research engineering"],
+    "location": "San Francisco, CA"
   },
   {
     "id": "p-luis",
     "name": "Luis Ortega",
     "bio": "BAIR lab manager who helps students find open reading groups and office hours.",
     "interests": ["community", "research operations"],
-    "skills": ["introductions", "events"]
+    "skills": ["introductions", "events"],
+    "location": "Berkeley, CA"
   }
 ]
