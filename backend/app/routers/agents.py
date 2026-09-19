@@ -11,6 +11,7 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 
 @router.post("/goal-network", response_model=GoalNetworkOut)
 def run_goal_network_agent(payload: GoalCreate, db: Session = Depends(get_db)):
+    """Step 1: decompose a goal. Does not read or write the contact graph."""
     return analyze_goal(db, payload.text)
 
 
@@ -23,5 +24,6 @@ def get_goal_network_plan(goal_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/knowledge-graph", response_model=GraphOut)
-def run_knowledge_graph_agent(goal_id: str | None = None, db: Session = Depends(get_db)):
-    return build_graph(db, goal_id)
+def run_knowledge_graph_agent(db: Session = Depends(get_db)):
+    """Step 2: full relationship map from SQLite. No goal filtering."""
+    return build_graph(db)

@@ -4,7 +4,22 @@ Goal-oriented personal network agent for HackMIT.
 
 Instead of listing everyone you know, YourWeb starts from a goal and shows a relationship graph of people and organizations that can help.
 
-## The two agents
+## The two agents (this track)
+
+1. **Goal → Network Agent** (`backend/app/agents/goal_network.py`)
+   - You type a goal.
+   - It breaks that into subgoals and the kinds of people to know next.
+   - Uses OpenAI if `OPENAI_API_KEY` is set; otherwise a built-in fallback so the demo still runs.
+   - Writes only `goals` and `goal_plans`.
+
+2. **Relationship Knowledge Graph** (`backend/app/agents/knowledge_graph.py`)
+   - Nodes: people, organizations/labs, interests.
+   - Edges: knows, member-of, interested-in, introduced-by, and whatever is already in SQLite.
+   - Reads SQLite only. Does not rank or hide people by goal.
+
+Teammate-owned Dropbox ingest, entity extraction, Elastic, and goal-specific graph views live in `backend/app/pipeline/` and are documented in `TEAM.md`.
+
+## What this version does
 
 1. **Goal → Network Agent** (`backend/app/agents/goal_network.py`)
    - You type a goal.
@@ -62,24 +77,7 @@ npm run dev
 
 Open http://localhost:5173
 
-## Dropbox (optional)
-
-1. Create a scoped Dropbox app with **App folder** access.
-2. Generate an access token.
-3. Put it in `backend/.env` as `DROPBOX_ACCESS_TOKEN=...`
-4. Upload these files into the app folder:
-
-```
-/network/people.json
-/network/organizations.json
-/network/relationships.json
-```
-
-Copy them from `backend/sample_data/`.
-
-5. Restart the backend, or click **Sync Dropbox** on the Graph page.
-
-If the token is missing or Dropbox fails, the app loads the local sample so the demo still works.
+See `TEAM.md` before adding Dropbox or Elastic code. This track does not ingest messy files and will not overwrite a network that already has rows.
 
 ## API
 
@@ -88,7 +86,7 @@ If the token is missing or Dropbox fails, the app loads the local sample so the 
 | POST | `/goals` | Save a goal |
 | GET | `/goals` | List saved goals |
 | POST | `/agents/goal-network` | Decompose a goal into subgoals and needed connections |
-| GET | `/agents/knowledge-graph` | Build the relationship map, optionally `?goal_id=` |
-| GET | `/graph` | Same knowledge graph, used by the frontend |
-| POST | `/sync/dropbox` | Reload network JSON from Dropbox |
-| POST | `/sync/sample` | Reload local sample JSON |
+| GET | `/agents/knowledge-graph` | Full relationship map (no goal filter) |
+| GET | `/graph` | Same map, used by the frontend |
+| POST | `/sync/dropbox` | Demo JSON only; 409 if SQLite already has a network |
+| POST | `/sync/sample` | Local sample only; 409 if SQLite already has a network |

@@ -1,3 +1,13 @@
+"""Demo JSON download only.
+
+This is NOT Dropbox messy-file ingest (step 4) and NOT entity extraction (step 5).
+Teammates should add their Dropbox crawler under backend/app/pipeline/ and must
+not be wiped by this module.
+
+If you use the same Dropbox app, keep structured demo JSON in /network/ and put
+raw notes/PDFs/resumes in a different folder such as /inbox/.
+"""
+
 import json
 import os
 

@@ -1,9 +1,21 @@
+"""Shared network rows in SQLite.
+
+Steps 1-2 may READ these tables.
+Steps 4-5 (teammates) WRITE people, organizations, and relationships.
+This helper must not wipe teammate-ingested rows unless the database is empty
+or the caller passes force=True.
+"""
+
 import json
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from .models import Organization, Person, Relationship, SyncState
+
+
+class NetworkNotEmpty(Exception):
+    pass
 
 
 def _as_json_list(value) -> str:
@@ -22,7 +34,22 @@ def _as_json_list(value) -> str:
     return json.dumps([str(value)])
 
 
-def replace_network(db: Session, payload: dict, source: str, detail: str) -> dict:
+def network_is_empty(db: Session) -> bool:
+    return db.query(Person).count() == 0 and db.query(Organization).count() == 0
+
+
+def replace_network(
+    db: Session,
+    payload: dict,
+    source: str,
+    detail: str,
+    force: bool = False,
+) -> dict:
+    if not force and not network_is_empty(db):
+        raise NetworkNotEmpty(
+            "SQLite already has network rows. Refusing to overwrite teammate Dropbox/Elastic ingest."
+        )
+
     db.query(Relationship).delete()
     db.query(Person).delete()
     db.query(Organization).delete()

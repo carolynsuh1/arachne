@@ -1,48 +1,45 @@
+"""Step 2 only: draw the stored network as a map.
+
+Do not filter or rank by goal here (step 3).
+Do not ingest Dropbox files here (step 4).
+Do not extract entities here (step 5).
+Do not query Elasticsearch here (step 6).
+
+This module only READs people, organizations, relationships, and goals from SQLite.
+It does not hide or rank contacts for a selected goal.
+"""
+
 import json
 import math
 import re
 
 from sqlalchemy.orm import Session
 
-from ..models import Organization, Person, Relationship, SyncState
-from ..schemas import (
-    GraphEdge,
-    GraphEdgeData,
-    GraphNode,
-    GraphNodeData,
-    GraphOut,
-    RankedNode,
-)
-from .goal_network import load_plan
+from ..models import Goal, Organization, Person, Relationship, SyncState
+from ..schemas import GraphEdge, GraphEdgeData, GraphNode, GraphNodeData, GraphOut
 
 
-def build_graph(db: Session, goal_id: str | None = None) -> GraphOut:
-    """Agent 2: turn stored people/orgs/relationships into a goal-aware map."""
+def build_graph(db: Session) -> GraphOut:
     people = db.query(Person).all()
     orgs = db.query(Organization).all()
     rels = db.query(Relationship).all()
+    goals = db.query(Goal).order_by(Goal.created_at.desc()).limit(8).all()
     state = db.get(SyncState, 1)
-    plan = load_plan(db, goal_id) if goal_id else None
-
-    query_terms = _query_terms(plan.goal.text if plan else "", plan)
-    scored_people = [_score_person(person, query_terms, plan) for person in people]
-    scored_orgs = [_score_org(org, query_terms, plan) for org in orgs]
 
     nodes: list[GraphNode] = []
     edges: list[GraphEdge] = []
 
-    if plan:
+    goal_positions = _positions(len(goals), 480, -40, 180)
+    for index, goal in enumerate(goals):
         nodes.append(
             GraphNode(
-                id=_node_id("goal", plan.goal.id),
+                id=_node_id("goal", goal.id),
                 type="goal",
-                position={"x": 480, "y": 20},
+                position=goal_positions[index],
                 data=GraphNodeData(
                     kind="goal",
-                    name="Your goal",
-                    description=plan.goal.text,
-                    relevant=True,
-                    why=plan.summary,
+                    name="Goal",
+                    description=goal.text,
                 ),
             )
         )
@@ -55,16 +52,12 @@ def build_graph(db: Session, goal_id: str | None = None) -> GraphOut:
                 id=_node_id("interest", slug),
                 type="interest",
                 position=interest_positions[index],
-                data=GraphNodeData(
-                    kind="interest",
-                    name=interest,
-                    relevant=any(term in interest.lower() for term in query_terms),
-                ),
+                data=GraphNodeData(kind="interest", name=interest),
             )
         )
 
     org_positions = _positions(len(orgs), 160, 380, 170)
-    for index, (org, score, why) in enumerate(scored_orgs):
+    for index, org in enumerate(orgs):
         nodes.append(
             GraphNode(
                 id=_node_id("organization", org.id),
@@ -75,15 +68,12 @@ def build_graph(db: Session, goal_id: str | None = None) -> GraphOut:
                     name=org.name,
                     org_type=org.type,
                     description=org.description,
-                    relevant=score > 0,
-                    why=why,
-                    score=score,
                 ),
             )
         )
 
     person_positions = _positions(len(people), 800, 400, 250)
-    for index, (person, score, why) in enumerate(scored_people):
+    for index, person in enumerate(people):
         nodes.append(
             GraphNode(
                 id=_node_id("person", person.id),
@@ -95,9 +85,6 @@ def build_graph(db: Session, goal_id: str | None = None) -> GraphOut:
                     bio=person.bio,
                     interests=json.loads(person.interests or "[]"),
                     skills=json.loads(person.skills or "[]"),
-                    relevant=score > 0,
-                    why=why,
-                    score=score,
                 ),
             )
         )
@@ -136,47 +123,13 @@ def build_graph(db: Session, goal_id: str | None = None) -> GraphOut:
                 )
             )
 
-    ranked = [
-        RankedNode(
-            id=_node_id("person", person.id),
-            name=person.name,
-            kind="person",
-            score=score,
-            why=why,
-        )
-        for person, score, why in sorted(scored_people, key=lambda item: item[1], reverse=True)
-        if score > 0
-    ]
-
-    if plan:
-        for item in ranked[:5]:
-            edges.append(
-                GraphEdge(
-                    id=f"goal-link-{item.id}",
-                    source=_node_id("goal", plan.goal.id),
-                    target=item.id,
-                    label="needed for",
-                    data=GraphEdgeData(
-                        type="needed_for",
-                        strength=min(1.0, item.score / 6),
-                        evidence=item.why,
-                    ),
-                )
-            )
-
-    source = state.source if state else "empty"
-    if plan:
-        detail = f"Knowledge graph ranked for: {plan.goal.text}"
-    else:
-        detail = state.detail if state else "No network data loaded yet."
-
     return GraphOut(
         nodes=nodes,
         edges=edges,
-        ranked=ranked,
-        source=source,
-        detail=detail,
-        goal_id=goal_id,
+        ranked=[],
+        source=state.source if state else "empty",
+        detail=state.detail if state else "No network data loaded yet.",
+        goal_id=None,
     )
 
 
@@ -195,8 +148,6 @@ def _unique_interests(people: list[Person]) -> dict[str, str]:
             slug = _slug(interest)
             if slug and slug not in seen:
                 seen[slug] = interest
-        if len(seen) >= 10:
-            break
     return seen
 
 
@@ -212,62 +163,3 @@ def _positions(count: int, origin_x: float, origin_y: float, radius: float) -> l
         }
         for index in range(count)
     ]
-
-
-def _query_terms(goal_text: str, plan) -> set[str]:
-    blob = goal_text
-    if plan:
-        blob += " " + plan.summary
-        blob += " " + " ".join(item.text for item in plan.subgoals)
-        blob += " " + " ".join(item.query + " " + item.kind for item in plan.needed_connections)
-    words = re.findall(r"[a-zA-Z]{4,}", blob.lower())
-    stop = {"want", "with", "that", "this", "from", "have", "into", "your", "they", "them"}
-    return {word for word in words if word not in stop}
-
-
-def _score_person(person: Person, terms: set[str], plan) -> tuple[Person, float, str]:
-    blob = " ".join(
-        [
-            person.name,
-            person.bio,
-            person.interests,
-            person.skills,
-        ]
-    ).lower()
-    hits = sorted({term for term in terms if term in blob})
-    score = float(len(hits))
-    why = ""
-    if hits:
-        why = "Matches your goal on: " + ", ".join(hits[:6])
-    if plan:
-        for needed in plan.needed_connections:
-            markers = _kind_markers(needed.kind)
-            if any(marker in blob for marker in markers):
-                score += 3
-                why = f"{needed.kind}: {needed.why}"
-                break
-    return person, score, why
-
-
-def _score_org(org: Organization, terms: set[str], plan) -> tuple[Organization, float, str]:
-    blob = " ".join([org.name, org.type, org.description]).lower()
-    hits = sorted({term for term in terms if term in blob})
-    score = float(len(hits))
-    why = "Matches your goal on: " + ", ".join(hits[:6]) if hits else ""
-    if plan and hits:
-        why = f"Relevant place for: {plan.summary}"
-    return org, score, why
-
-
-def _kind_markers(kind: str) -> list[str]:
-    lowered = kind.lower()
-    mapping = {
-        "faculty advisor": ["faculty", "professor", "advisor"],
-        "current student": ["phd", "undergrad", "graduate student"],
-        "lab manager": ["lab manager", "community", "office hours"],
-        "alumni": ["alum", "alumni"],
-        "recruiter": ["recruiter", "hiring"],
-    }
-    if lowered in mapping:
-        return mapping[lowered]
-    return [word for word in lowered.split() if len(word) > 5]

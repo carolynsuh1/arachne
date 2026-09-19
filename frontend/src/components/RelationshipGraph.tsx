@@ -45,7 +45,7 @@ export function RelationshipGraph({ nodes, edges, onSelect }: Props) {
         source: edge.source,
         target: edge.target,
         label: edge.label,
-        animated: edge.data.type === "needed_for" || edge.data.strength >= 0.8,
+        animated: edge.data.strength >= 0.8,
       })),
     [edges],
   )

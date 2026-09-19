@@ -22,5 +22,17 @@
     "name": "Robot Learning Lab",
     "type": "lab",
     "description": "Lab working on robot learning and deep reinforcement learning."
+  },
+  {
+    "id": "o-robotics-club",
+    "name": "Berkeley Robotics Club",
+    "type": "club",
+    "description": "Student club for robotics builds, demos, and recruiting into labs."
+  },
+  {
+    "id": "o-bair-handbook",
+    "name": "BAIR undergrad research notes",
+    "type": "resource",
+    "description": "Shared notes on how students join BAIR labs and reading groups."
   }
 ]

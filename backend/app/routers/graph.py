@@ -9,5 +9,6 @@ router = APIRouter(prefix="/graph", tags=["graph"])
 
 
 @router.get("", response_model=GraphOut)
-def get_graph(goal_id: str | None = None, db: Session = Depends(get_db)):
-    return build_graph(db, goal_id)
+def get_graph(db: Session = Depends(get_db)):
+    """Full contact map (step 2). Goal-specific views belong to teammates (step 3)."""
+    return build_graph(db)

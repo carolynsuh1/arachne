@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dropbox_client import DropboxError, download_network, get_access_token
-from ..ingest import replace_network
+from ..ingest import NetworkNotEmpty, replace_network
 from ..models import Organization, Person, Relationship, SyncState
 from ..schemas import SyncOut
 from ..seed import load_sample_payload, seed_if_empty
@@ -27,48 +27,48 @@ def sync_status(db: Session = Depends(get_db)):
 
 
 @router.post("/dropbox", response_model=SyncOut)
-def sync_dropbox(db: Session = Depends(get_db)):
+def sync_dropbox(
+    force: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    """Demo JSON loader only. Does not run messy Dropbox ingest (step 4)."""
     if not get_access_token():
         raise HTTPException(
             status_code=400,
-            detail="Set DROPBOX_ACCESS_TOKEN in backend/.env to sync from Dropbox.",
+            detail="Set DROPBOX_ACCESS_TOKEN in backend/.env to sync demo JSON from Dropbox.",
         )
     try:
         payload = download_network()
-        result = replace_network(
+        return replace_network(
             db,
             payload,
             source="dropbox",
-            detail="Loaded people, organizations, and relationships from Dropbox.",
+            detail="Loaded demo JSON from /network/. Messy Dropbox ingest is owned by teammates.",
+            force=force,
         )
-        return result
+    except NetworkNotEmpty as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except DropboxError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @router.post("/sample", response_model=SyncOut)
-def sync_sample(db: Session = Depends(get_db)):
-    result = replace_network(
-        db,
-        load_sample_payload(),
-        source="seed",
-        detail="Reloaded the local sample JSON files.",
-    )
-    return result
+def sync_sample(
+    force: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    try:
+        return replace_network(
+            db,
+            load_sample_payload(),
+            source="seed",
+            detail="Loaded local sample JSON. Will not overwrite an existing ingested network unless force=true.",
+            force=force,
+        )
+    except NetworkNotEmpty as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 def startup_sync(db: Session) -> None:
-    if get_access_token():
-        try:
-            payload = download_network()
-            replace_network(
-                db,
-                payload,
-                source="dropbox",
-                detail="Loaded people, organizations, and relationships from Dropbox on startup.",
-            )
-            return
-        except DropboxError:
-            seed_if_empty(db)
-            return
+    # Never pull Dropbox on boot. That would wipe teammate ingest on every reload.
     seed_if_empty(db)

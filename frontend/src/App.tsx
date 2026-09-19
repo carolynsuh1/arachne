@@ -38,7 +38,7 @@ export default function App() {
             onOpenGraph={() => setPage("graph")}
           />
         ) : (
-          <GraphPage plan={plan} />
+          <GraphPage />
         )}
       </main>
     </div>

@@ -148,5 +148,25 @@
     "type": "interested_in",
     "strength": 0.8,
     "evidence": "Maya wants to join BAIR research."
+  },
+  {
+    "id": "r16",
+    "source_type": "person",
+    "source_id": "p-maya",
+    "target_type": "organization",
+    "target_id": "o-robotics-club",
+    "type": "member_of",
+    "strength": 0.7,
+    "evidence": "Maya is in the campus robotics club."
+  },
+  {
+    "id": "r17",
+    "source_type": "person",
+    "source_id": "p-luis",
+    "target_type": "organization",
+    "target_id": "o-bair-handbook",
+    "type": "worked_on",
+    "strength": 0.6,
+    "evidence": "Luis maintains the undergrad research notes."
   }
 ]

@@ -43,9 +43,8 @@ export function listGoals() {
   return request<Goal[]>("/goals")
 }
 
-export function fetchGraph(goalId?: string) {
-  const suffix = goalId ? `?goal_id=${encodeURIComponent(goalId)}` : ""
-  return request<GraphResponse>(`/graph${suffix}`)
+export function fetchGraph() {
+  return request<GraphResponse>("/graph")
 }
 
 export function syncFromDropbox() {
