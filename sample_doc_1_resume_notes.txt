@@ -1,7 +1,0 @@
-Notes from career fair - Sept 2026
-
-Talked to Dr. Elena Marsh at the robotics booth, she's a research scientist at Boston Dynamics working on legged locomotion. Mentioned she used to be a postdoc at MIT CSAIL under Prof. Sangbae Kim. Really into bio-inspired robotics and prosthetics. Said she's looking for undergrads with C++ and controls background for a summer project on adaptive gait algorithms.
-
-Also ran into Jason Okafor, he's a 3rd year at Hartnell doing a project on low-cost prosthetic hands, uses Arduino and some ML for grip classification. He's part of the Robotics Club at Hartnell and mentioned he's applying to HackMIT too. Good potential collaborator, similar interests to mine (assistive tech, hardware).
-
-Grabbed a business card from Priya Raman, she works at a startup called NeuroLoop doing EMG-based prosthetic control, based in the Bay Area. Said to reach out if I want to shadow their lab sometime.
