@@ -1,3 +1,10 @@
+"""Step 1: Goal → Network Agent.
+
+Writes only Goal and GoalPlan rows.
+Does not read people/orgs/relationships.
+Does not call Dropbox or Elasticsearch.
+Teammates read GoalPlan for step 3 (dynamic graph views).
+"""
 import json
 import os
 import re

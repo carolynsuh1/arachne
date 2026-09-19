@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react"
+import { listGoals } from "../api"
 import { GoalForm } from "../components/GoalForm"
-import type { GoalNetworkResult } from "../types"
+import type { Goal, GoalNetworkResult } from "../types"
 
 type Props = {
   plan: GoalNetworkResult | null
@@ -8,6 +10,14 @@ type Props = {
 }
 
 export function GoalPage({ plan, onAnalyzed, onOpenGraph }: Props) {
+  const [recent, setRecent] = useState<Goal[]>([])
+
+  useEffect(() => {
+    listGoals()
+      .then(setRecent)
+      .catch(() => setRecent([]))
+  }, [plan?.goal.id])
+
   return (
     <div className="mx-auto max-w-2xl">
       <p className="font-sans text-sm tracking-wide text-stone-500 uppercase">
@@ -28,6 +38,9 @@ export function GoalPage({ plan, onAnalyzed, onOpenGraph }: Props) {
               Agent plan · {plan.provider}
             </p>
             <p className="mt-2 text-lg">{plan.summary}</p>
+            <p className="mt-2 font-sans text-xs text-stone-500">
+              goal id: {plan.goal.id}
+            </p>
           </div>
           <section>
             <h2 className="text-2xl">Subgoals</h2>
@@ -42,6 +55,9 @@ export function GoalPage({ plan, onAnalyzed, onOpenGraph }: Props) {
           </section>
           <section>
             <h2 className="text-2xl">Who to know next</h2>
+            <p className="mt-1 font-sans text-sm text-stone-600">
+              Kinds of people and connections, not a ranked contact list.
+            </p>
             <ul className="mt-3 space-y-3">
               {plan.needed_connections.map((item) => (
                 <li key={item.kind + item.query} className="rounded-md border border-stone-200 bg-white p-4">
@@ -59,9 +75,22 @@ export function GoalPage({ plan, onAnalyzed, onOpenGraph }: Props) {
             onClick={onOpenGraph}
             className="rounded-full bg-stone-900 px-5 py-2.5 font-sans text-sm text-white"
           >
-            Open relationship graph
+            Open the full relationship map
           </button>
         </div>
+      ) : null}
+      {recent.length ? (
+        <section className="mt-10">
+          <h2 className="text-2xl">Saved goals</h2>
+          <ul className="mt-3 space-y-2">
+            {recent.slice(0, 5).map((goal) => (
+              <li key={goal.id} className="rounded-md border border-stone-200 bg-white p-3">
+                <p>{goal.text}</p>
+                <p className="mt-1 font-sans text-xs text-stone-500">{goal.id}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </div>
   )
