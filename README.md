@@ -4,7 +4,19 @@ Goal-oriented personal network agent for HackMIT.
 
 Instead of listing everyone you know, YourWeb starts from a goal and shows a relationship graph of people and organizations that can help.
 
-## What this first version does
+## The two agents
+
+1. **Goal → Network Agent** (`backend/app/agents/goal_network.py`)
+   - You type a goal.
+   - It breaks that into subgoals and the kinds of people to know next.
+   - Uses OpenAI if `OPENAI_API_KEY` is set; otherwise a built-in fallback so the demo still runs.
+
+2. **Relationship Knowledge Graph** (`backend/app/agents/knowledge_graph.py`)
+   - Nodes: people, organizations/labs, interests, and the current goal.
+   - Edges: knows, member-of, interested-in, introduced-by, needed-for.
+   - Reads SQLite (filled from Dropbox or local sample). If a goal plan exists, it ranks who matters.
+
+## What this version does
 
 1. You type a goal on the web page. The backend saves it in SQLite.
 2. A sample Berkeley AI network is shown as a graph (people, orgs, relationships).
@@ -75,6 +87,8 @@ If the token is missing or Dropbox fails, the app loads the local sample so the 
 | --- | --- | --- |
 | POST | `/goals` | Save a goal |
 | GET | `/goals` | List saved goals |
-| GET | `/graph` | Nodes and edges for React Flow |
+| POST | `/agents/goal-network` | Decompose a goal into subgoals and needed connections |
+| GET | `/agents/knowledge-graph` | Build the relationship map, optionally `?goal_id=` |
+| GET | `/graph` | Same knowledge graph, used by the frontend |
 | POST | `/sync/dropbox` | Reload network JSON from Dropbox |
 | POST | `/sync/sample` | Reload local sample JSON |

@@ -7,6 +7,8 @@ import {
   type Edge,
   type Node,
 } from "@xyflow/react"
+import { GoalNode } from "./GoalNode"
+import { InterestNode } from "./InterestNode"
 import { OrgNode } from "./OrgNode"
 import { PersonNode } from "./PersonNode"
 import type { GraphEdge, GraphNode, GraphNodeData } from "../types"
@@ -14,6 +16,8 @@ import type { GraphEdge, GraphNode, GraphNodeData } from "../types"
 const nodeTypes = {
   person: PersonNode,
   organization: OrgNode,
+  interest: InterestNode,
+  goal: GoalNode,
 }
 
 type Props = {
@@ -41,7 +45,7 @@ export function RelationshipGraph({ nodes, edges, onSelect }: Props) {
         source: edge.source,
         target: edge.target,
         label: edge.label,
-        animated: edge.data.strength >= 0.8,
+        animated: edge.data.type === "needed_for" || edge.data.strength >= 0.8,
       })),
     [edges],
   )

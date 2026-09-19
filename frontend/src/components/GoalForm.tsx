@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from "react"
-import { createGoal } from "../api"
-import type { Goal } from "../types"
+import { analyzeGoal } from "../api"
+import type { GoalNetworkResult } from "../types"
 
-export function GoalForm() {
+type Props = {
+  onAnalyzed: (result: GoalNetworkResult) => void
+}
+
+export function GoalForm({ onAnalyzed }: Props) {
   const [text, setText] = useState(
-    "I want to get involved in AI research at Berkeley.",
+    "I want to find a robotics research position at Berkeley.",
   )
-  const [saved, setSaved] = useState<Goal | null>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -15,10 +18,10 @@ export function GoalForm() {
     setError("")
     setLoading(true)
     try {
-      const goal = await createGoal(text)
-      setSaved(goal)
+      const result = await analyzeGoal(text)
+      onAnalyzed(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save the goal.")
+      setError(err instanceof Error ? err.message : "The network agent failed.")
     } finally {
       setLoading(false)
     }
@@ -42,18 +45,9 @@ export function GoalForm() {
         disabled={loading}
         className="rounded-full bg-stone-900 px-5 py-2.5 font-sans text-sm text-white disabled:opacity-60"
       >
-        {loading ? "Saving…" : "Save goal"}
+        {loading ? "Thinking…" : "Ask the network agent"}
       </button>
       {error ? <p className="font-sans text-sm text-red-800">{error}</p> : null}
-      {saved ? (
-        <div className="rounded-md border border-stone-300 bg-white p-4">
-          <p className="font-sans text-xs tracking-wide text-stone-500 uppercase">
-            Saved
-          </p>
-          <p className="mt-2 text-lg">{saved.text}</p>
-          <p className="mt-2 font-sans text-xs text-stone-500">id: {saved.id}</p>
-        </div>
-      ) : null}
     </form>
   )
 }

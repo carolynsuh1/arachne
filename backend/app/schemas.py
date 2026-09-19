@@ -15,6 +15,25 @@ class GoalOut(BaseModel):
     created_at: datetime
 
 
+class Subgoal(BaseModel):
+    text: str
+    why: str
+
+
+class NeededConnection(BaseModel):
+    kind: str
+    query: str
+    why: str
+
+
+class GoalNetworkOut(BaseModel):
+    goal: GoalOut
+    summary: str
+    subgoals: list[Subgoal]
+    needed_connections: list[NeededConnection]
+    provider: str
+
+
 class GraphNodeData(BaseModel):
     kind: str
     name: str
@@ -23,6 +42,9 @@ class GraphNodeData(BaseModel):
     skills: list[str] = []
     org_type: str | None = None
     description: str | None = None
+    relevant: bool = False
+    why: str | None = None
+    score: float | None = None
 
 
 class GraphNode(BaseModel):
@@ -46,11 +68,21 @@ class GraphEdge(BaseModel):
     data: GraphEdgeData
 
 
+class RankedNode(BaseModel):
+    id: str
+    name: str
+    kind: str
+    score: float
+    why: str
+
+
 class GraphOut(BaseModel):
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+    ranked: list[RankedNode] = []
     source: str
     detail: str
+    goal_id: str | None = None
 
 
 class SyncOut(BaseModel):

@@ -33,6 +33,16 @@ class Goal(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class GoalPlan(Base):
+    __tablename__ = "goal_plans"
+
+    goal_id: Mapped[str] = mapped_column(String, primary_key=True)
+    summary: Mapped[str] = mapped_column(Text, default="")
+    subgoals_json: Mapped[str] = mapped_column(Text, default="[]")
+    needed_connections_json: Mapped[str] = mapped_column(Text, default="[]")
+    provider: Mapped[str] = mapped_column(String, default="heuristic")
+
+
 class Relationship(Base):
     __tablename__ = "relationships"
 

@@ -4,14 +4,36 @@ export type Goal = {
   created_at: string
 }
 
+export type Subgoal = {
+  text: string
+  why: string
+}
+
+export type NeededConnection = {
+  kind: string
+  query: string
+  why: string
+}
+
+export type GoalNetworkResult = {
+  goal: Goal
+  summary: string
+  subgoals: Subgoal[]
+  needed_connections: NeededConnection[]
+  provider: string
+}
+
 export type GraphNodeData = {
-  kind: "person" | "organization" | string
+  kind: "person" | "organization" | "interest" | "goal" | string
   name: string
   bio?: string | null
   interests?: string[]
   skills?: string[]
   org_type?: string | null
   description?: string | null
+  relevant?: boolean
+  why?: string | null
+  score?: number | null
 }
 
 export type GraphNode = {
@@ -33,11 +55,21 @@ export type GraphEdge = {
   }
 }
 
+export type RankedNode = {
+  id: string
+  name: string
+  kind: string
+  score: number
+  why: string
+}
+
 export type GraphResponse = {
   nodes: GraphNode[]
   edges: GraphEdge[]
+  ranked: RankedNode[]
   source: string
   detail: string
+  goal_id: string | null
 }
 
 export type SyncResponse = {

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react"
 import { fetchGraph, syncFromDropbox, syncFromSample } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
-import type { GraphNodeData, GraphResponse } from "../types"
+import type { GoalNetworkResult, GraphNodeData, GraphResponse } from "../types"
 
-export function GraphPage() {
+type Props = {
+  plan: GoalNetworkResult | null
+}
+
+export function GraphPage({ plan }: Props) {
   const [graph, setGraph] = useState<GraphResponse | null>(null)
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(
     null,
@@ -13,7 +17,7 @@ export function GraphPage() {
 
   async function loadGraph() {
     setError("")
-    const data = await fetchGraph()
+    const data = await fetchGraph(plan?.goal.id)
     setGraph(data)
     setStatus(`${data.source}: ${data.detail}`)
   }
@@ -22,7 +26,7 @@ export function GraphPage() {
     loadGraph().catch((err) => {
       setError(err instanceof Error ? err.message : "Could not load the graph.")
     })
-  }, [])
+  }, [plan?.goal.id])
 
   async function onDropboxSync() {
     setError("")
@@ -53,11 +57,12 @@ export function GraphPage() {
       <div className="space-y-4">
         <div>
           <p className="font-sans text-sm tracking-wide text-stone-500 uppercase">
-            Phase 2
+            Relationship Knowledge Graph
           </p>
-          <h1 className="mt-2 text-4xl leading-tight">Relationship graph</h1>
+          <h1 className="mt-2 text-4xl leading-tight">Your contacts are a map</h1>
           <p className="mt-2 max-w-2xl text-stone-700">
-            Sample Berkeley AI network. Click a node to see why they matter.
+            People, labs, clubs, and interests as nodes. Knows, member-of,
+            interested-in, and introduced-by as edges.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -93,30 +98,50 @@ export function GraphPage() {
             Loading graph…
           </div>
         )}
-        <aside className="rounded-xl border border-stone-300 bg-white p-4">
-          {selected ? (
-            <>
+        <aside className="space-y-4">
+          <div className="rounded-xl border border-stone-300 bg-white p-4">
+            {selected ? (
+              <>
+                <p className="font-sans text-xs tracking-wide text-stone-500 uppercase">
+                  {selected.kind}
+                </p>
+                <h2 className="mt-1 text-2xl">{selected.name}</h2>
+                <p className="mt-3 text-sm text-stone-700">
+                  {selected.why ||
+                    selected.bio ||
+                    selected.description ||
+                    "No description yet."}
+                </p>
+                {selected.interests?.length ? (
+                  <p className="mt-4 font-sans text-sm">
+                    Interests: {selected.interests.join(", ")}
+                  </p>
+                ) : null}
+                {selected.skills?.length ? (
+                  <p className="mt-2 font-sans text-sm">
+                    Skills: {selected.skills.join(", ")}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-stone-600">Select a person or organization.</p>
+            )}
+          </div>
+          {graph?.ranked.length ? (
+            <div className="rounded-xl border border-stone-300 bg-white p-4">
               <p className="font-sans text-xs tracking-wide text-stone-500 uppercase">
-                {selected.kind}
+                Ranked for this goal
               </p>
-              <h2 className="mt-1 text-2xl">{selected.name}</h2>
-              <p className="mt-3 text-sm text-stone-700">
-                {selected.bio || selected.description || "No description yet."}
-              </p>
-              {selected.interests?.length ? (
-                <p className="mt-4 font-sans text-sm">
-                  Interests: {selected.interests.join(", ")}
-                </p>
-              ) : null}
-              {selected.skills?.length ? (
-                <p className="mt-2 font-sans text-sm">
-                  Skills: {selected.skills.join(", ")}
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <p className="text-stone-600">Select a person or organization.</p>
-          )}
+              <ol className="mt-3 space-y-3">
+                {graph.ranked.slice(0, 5).map((item) => (
+                  <li key={item.id}>
+                    <p>{item.name}</p>
+                    <p className="font-sans text-sm text-stone-600">{item.why}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </aside>
       </div>
     </div>
