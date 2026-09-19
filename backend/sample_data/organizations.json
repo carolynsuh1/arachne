@@ -1,0 +1,26 @@
+[
+  {
+    "id": "o-berkeley",
+    "name": "UC Berkeley",
+    "type": "university",
+    "description": "Home campus for the AI research goal."
+  },
+  {
+    "id": "o-bair",
+    "name": "Berkeley AI Research",
+    "type": "lab",
+    "description": "Campus AI research community spanning faculty, students, and labs."
+  },
+  {
+    "id": "o-eecs",
+    "name": "Berkeley EECS",
+    "type": "department",
+    "description": "Electrical Engineering and Computer Sciences department."
+  },
+  {
+    "id": "o-rllab",
+    "name": "Robot Learning Lab",
+    "type": "lab",
+    "description": "Lab working on robot learning and deep reinforcement learning."
+  }
+]

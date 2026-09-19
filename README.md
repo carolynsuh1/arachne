@@ -1,0 +1,80 @@
+# YourWeb
+
+Goal-oriented personal network agent for HackMIT.
+
+Instead of listing everyone you know, YourWeb starts from a goal and shows a relationship graph of people and organizations that can help.
+
+## What this first version does
+
+1. You type a goal on the web page. The backend saves it in SQLite.
+2. A sample Berkeley AI network is shown as a graph (people, orgs, relationships).
+3. If you set a Dropbox token, the same three JSON files can be loaded from Dropbox instead of the local sample.
+
+There is no login, no ranking AI, and no deployment yet.
+
+## Folder map
+
+- `frontend/` — React + Vite + Tailwind + React Flow. This is the page you open.
+- `backend/app/main.py` — FastAPI app, CORS, startup sync.
+- `backend/app/models.py` — SQLite tables: Person, Organization, Goal, Relationship.
+- `backend/app/dropbox_client.py` — downloads `/network/*.json` from Dropbox.
+- `backend/app/ingest.py` — writes those JSON files into SQLite.
+- `backend/sample_data/` — the same JSON you can upload to Dropbox.
+
+## Run locally
+
+You need two terminals.
+
+### Backend
+
+Use Python 3.12 or 3.13 if you can (`python3.12 -m venv .venv`). Very new 3.14 installs can fail on older Pydantic wheels.
+
+```bash
+cd backend
+python3.12 -m venv .venv || python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
+```
+
+Open http://localhost:8000/health to confirm it is running.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173
+
+## Dropbox (optional)
+
+1. Create a scoped Dropbox app with **App folder** access.
+2. Generate an access token.
+3. Put it in `backend/.env` as `DROPBOX_ACCESS_TOKEN=...`
+4. Upload these files into the app folder:
+
+```
+/network/people.json
+/network/organizations.json
+/network/relationships.json
+```
+
+Copy them from `backend/sample_data/`.
+
+5. Restart the backend, or click **Sync Dropbox** on the Graph page.
+
+If the token is missing or Dropbox fails, the app loads the local sample so the demo still works.
+
+## API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/goals` | Save a goal |
+| GET | `/goals` | List saved goals |
+| GET | `/graph` | Nodes and edges for React Flow |
+| POST | `/sync/dropbox` | Reload network JSON from Dropbox |
+| POST | `/sync/sample` | Reload local sample JSON |

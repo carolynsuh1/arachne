@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  background: #f4efe6;
+  color: #1c1915;
+}
+
+button,
+input,
+textarea {
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}

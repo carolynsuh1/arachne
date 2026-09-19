@@ -1,0 +1,152 @@
+[
+  {
+    "id": "r1",
+    "source_type": "person",
+    "source_id": "p-maya",
+    "target_type": "organization",
+    "target_id": "o-berkeley",
+    "type": "member_of",
+    "strength": 0.95,
+    "evidence": "Maya is a current Berkeley undergraduate."
+  },
+  {
+    "id": "r2",
+    "source_type": "person",
+    "source_id": "p-maya",
+    "target_type": "person",
+    "target_id": "p-anjali",
+    "type": "knows",
+    "strength": 0.7,
+    "evidence": "They met at an EECS undergraduate research mixer."
+  },
+  {
+    "id": "r3",
+    "source_type": "person",
+    "source_id": "p-anjali",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "member_of",
+    "strength": 0.9,
+    "evidence": "Anjali is a BAIR PhD student."
+  },
+  {
+    "id": "r4",
+    "source_type": "person",
+    "source_id": "p-anjali",
+    "target_type": "person",
+    "target_id": "p-sergey",
+    "type": "works_with",
+    "strength": 0.8,
+    "evidence": "Anjali is advised in the broader RL / LM research community around Sergey."
+  },
+  {
+    "id": "r5",
+    "source_type": "person",
+    "source_id": "p-sergey",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "works_at",
+    "strength": 0.95,
+    "evidence": "Faculty member affiliated with BAIR."
+  },
+  {
+    "id": "r6",
+    "source_type": "person",
+    "source_id": "p-pieter",
+    "target_type": "organization",
+    "target_id": "o-rllab",
+    "type": "works_at",
+    "strength": 0.95,
+    "evidence": "Leads robot learning research at Berkeley."
+  },
+  {
+    "id": "r7",
+    "source_type": "person",
+    "source_id": "p-pieter",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "member_of",
+    "strength": 0.9,
+    "evidence": "BAIR faculty."
+  },
+  {
+    "id": "r8",
+    "source_type": "person",
+    "source_id": "p-jordan",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "member_of",
+    "strength": 0.85,
+    "evidence": "Postdoc hosted in the BAIR community."
+  },
+  {
+    "id": "r9",
+    "source_type": "person",
+    "source_id": "p-jordan",
+    "target_type": "person",
+    "target_id": "p-dawn",
+    "type": "worked_with",
+    "strength": 0.6,
+    "evidence": "Collaborated on a trustworthy perception reading group."
+  },
+  {
+    "id": "r10",
+    "source_type": "person",
+    "source_id": "p-dawn",
+    "target_type": "organization",
+    "target_id": "o-eecs",
+    "type": "works_at",
+    "strength": 0.9,
+    "evidence": "EECS faculty."
+  },
+  {
+    "id": "r11",
+    "source_type": "person",
+    "source_id": "p-priya",
+    "target_type": "person",
+    "target_id": "p-anjali",
+    "type": "introduced_by",
+    "strength": 0.75,
+    "evidence": "Priya introduced Anjali into a BAIR alumni research chat."
+  },
+  {
+    "id": "r12",
+    "source_type": "person",
+    "source_id": "p-priya",
+    "target_type": "organization",
+    "target_id": "o-berkeley",
+    "type": "member_of",
+    "strength": 0.5,
+    "evidence": "Alum of Berkeley EECS."
+  },
+  {
+    "id": "r13",
+    "source_type": "person",
+    "source_id": "p-luis",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "works_at",
+    "strength": 0.9,
+    "evidence": "Runs BAIR community programming."
+  },
+  {
+    "id": "r14",
+    "source_type": "person",
+    "source_id": "p-luis",
+    "target_type": "person",
+    "target_id": "p-maya",
+    "type": "knows",
+    "strength": 0.65,
+    "evidence": "Luis met Maya at BAIR undergraduate office hours."
+  },
+  {
+    "id": "r15",
+    "source_type": "person",
+    "source_id": "p-maya",
+    "target_type": "organization",
+    "target_id": "o-bair",
+    "type": "interested_in",
+    "strength": 0.8,
+    "evidence": "Maya wants to join BAIR research."
+  }
+]
