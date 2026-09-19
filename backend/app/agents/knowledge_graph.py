@@ -1,9 +1,8 @@
 """Step 2 only: draw the stored network as a map.
 
 Do not filter or rank by goal here (step 3).
-Do not ingest Dropbox files here (step 4).
-Do not extract entities here (step 5).
-Do not query Elasticsearch here (step 6).
+Do not extract entities here (step 4).
+Do not query Elasticsearch here (step 5).
 
 This module only READs people, organizations, relationships, and goals from SQLite.
 It does not hide or rank contacts for a selected goal.

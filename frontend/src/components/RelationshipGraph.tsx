@@ -1,9 +1,11 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import {
   Background,
   Controls,
   MiniMap,
   ReactFlow,
+  useEdgesState,
+  useNodesState,
   type Edge,
   type Node,
 } from "@xyflow/react"
@@ -50,13 +52,24 @@ export function RelationshipGraph({ nodes, edges, onSelect }: Props) {
     [edges],
   )
 
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([])
+  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([])
+
+  useEffect(() => {
+    setRfNodes(flowNodes)
+    setRfEdges(flowEdges)
+  }, [flowNodes, flowEdges, setRfNodes, setRfEdges])
+
   return (
     <div className="h-[70vh] overflow-hidden rounded-xl border border-stone-300 bg-[#fbf7f0]">
       <ReactFlow
-        nodes={flowNodes}
-        edges={flowEdges}
+        nodes={rfNodes}
+        edges={rfEdges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         fitView
+        minZoom={0.2}
         onNodeClick={(_event, node) =>
           onSelect({ id: node.id, ...(node.data as GraphNodeData) })
         }

@@ -47,10 +47,6 @@ export function fetchGraph() {
   return request<GraphResponse>("/graph")
 }
 
-export function syncFromDropbox() {
-  return request<SyncResponse>("/sync/dropbox", { method: "POST" })
-}
-
 export function syncFromSample() {
   return request<SyncResponse>("/sync/sample", { method: "POST" })
 }

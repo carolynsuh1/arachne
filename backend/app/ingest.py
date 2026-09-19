@@ -1,8 +1,8 @@
 """Shared network rows in SQLite.
 
 Steps 1-2 may READ these tables.
-Steps 4-5 (teammates) WRITE people, organizations, and relationships.
-This helper must not wipe teammate-ingested rows unless the database is empty
+Extract and sample seed WRITE people, organizations, and relationships.
+This helper must not wipe existing network rows unless the database is empty
 or the caller passes force=True.
 """
 
@@ -47,7 +47,7 @@ def replace_network(
 ) -> dict:
     if not force and not network_is_empty(db):
         raise NetworkNotEmpty(
-            "SQLite already has network rows. Refusing to overwrite teammate Dropbox/Elastic ingest."
+            "SQLite already has network rows. Refusing to overwrite an existing network."
         )
 
     db.query(Relationship).delete()

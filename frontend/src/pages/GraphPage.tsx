@@ -26,8 +26,8 @@ export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:strin
         </p>
         <h1 className="mt-2 text-4xl leading-tight">Your contacts are a map</h1>
         <p className="mt-2 max-w-2xl text-stone-700">
-          Full network from SQLite. Goal-specific views, Dropbox ingest, and
-          Elastic search are owned by teammates and are not run from this page.
+          Full network from SQLite. Goal-specific views and Elastic search
+          are owned by teammates and are not run from this page.
         </p>
       </div>
       {graph ? (
