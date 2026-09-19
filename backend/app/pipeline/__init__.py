@@ -1,6 +1,5 @@
-"""Placeholders for teammate-owned steps 3-6.
+"""Pipeline helpers for steps 3-6.
 
-Steps 1-2 (goal_network, knowledge_graph) must not import this package.
-Fill these modules in; do not change the Goal → Network agent to call Dropbox
-or Elasticsearch.
+llm.py and extract.py call GPT-5.6 Terra. goal_network.py must not import this
+package.
 """
