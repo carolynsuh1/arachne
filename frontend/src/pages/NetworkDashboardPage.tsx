@@ -10,7 +10,14 @@ import type {
   TrackerPerson,
 } from "../types"
 
-type SortBy = "name" | "company" | "location"
+type SortKey = "name" | "company" | "location"
+type SortDirection = "asc" | "desc"
+
+const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "name", label: "Person" },
+  { key: "company", label: "Company" },
+  { key: "location", label: "Geographic area" },
+]
 
 type Props = {
   onResearch: (person: { id: string; name: string }) => void
@@ -22,7 +29,8 @@ export function NetworkDashboardPage({ onResearch }: Props) {
   const [graph, setGraph] = useState<GraphResponse | null>(null)
   const [tracker, setTracker] = useState<NetworkTracker | null>(null)
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(null)
-  const [sortBy, setSortBy] = useState<SortBy>("name")
+  const [sortKey, setSortKey] = useState<SortKey>("name")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -54,20 +62,38 @@ export function NetworkDashboardPage({ onResearch }: Props) {
     setSelected(null)
   }
 
+  function sortPeopleBy(key: SortKey) {
+    if (key === sortKey) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+      return
+    }
+    setSortKey(key)
+    setSortDirection("asc")
+  }
+
+  // The newest goal wins when the same goal was analyzed more than once.
+  const uniqueGoals = useMemo(() => {
+    const seen = new Set<string>()
+    return goals.filter((goal) => {
+      const key = goal.text.trim().toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [goals])
+
   const sortedPeople = useMemo(() => {
     const people = [...(tracker?.people ?? [])]
     return people.sort((left, right) => {
-      if (sortBy === "company") {
-        return compare(left.companies[0] || "zzzz", right.companies[0] || "zzzz")
-          || compare(left.name, right.name)
-      }
-      if (sortBy === "location") {
-        return compare(left.location || "zzzz", right.location || "zzzz")
-          || compare(left.name, right.name)
-      }
-      return compare(left.name, right.name)
+      const leftValue = sortValue(left, sortKey)
+      const rightValue = sortValue(right, sortKey)
+      // People with no company or location stay at the bottom either way.
+      if (leftValue && !rightValue) return -1
+      if (!leftValue && rightValue) return 1
+      const ordered = compare(leftValue, rightValue)
+      return (sortDirection === "asc" ? ordered : -ordered) || compare(left.name, right.name)
     })
-  }, [sortBy, tracker])
+  }, [sortDirection, sortKey, tracker])
 
   return (
     <div className="space-y-8">
@@ -87,9 +113,12 @@ export function NetworkDashboardPage({ onResearch }: Props) {
       <section className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="rounded-xl border border-stone-300 bg-white p-4">
           <h2 className="text-2xl">Saved goals</h2>
-          {goals.length ? (
+          <p className="mt-1 font-sans text-xs text-stone-500">
+            Newest first. Repeated goals are collapsed.
+          </p>
+          {uniqueGoals.length ? (
             <div className="mt-3 space-y-2">
-              {goals.map((goal) => (
+              {uniqueGoals.map((goal) => (
                 <button
                   key={goal.id}
                   type="button"
@@ -148,18 +177,9 @@ export function NetworkDashboardPage({ onResearch }: Props) {
             </p>
             <h2 className="mt-1 text-3xl">Coverage at a glance</h2>
           </div>
-          <label className="font-sans text-sm">
-            Sort people by{" "}
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as SortBy)}
-              className="rounded-md border border-stone-300 bg-white px-3 py-2"
-            >
-              <option value="name">Name</option>
-              <option value="company">Company</option>
-              <option value="location">Geographic area</option>
-            </select>
-          </label>
+          <p className="font-sans text-sm text-stone-600">
+            Groups run widest coverage first. Click a column to sort people.
+          </p>
         </div>
 
         {tracker ? (
@@ -170,7 +190,12 @@ export function NetworkDashboardPage({ onResearch }: Props) {
               <TrackerCard title="Organizations" groups={tracker.organizations} />
               <TrackerCard title="Geographic areas" groups={tracker.locations} />
             </div>
-            <PeopleList people={sortedPeople} />
+            <PeopleList
+              people={sortedPeople}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSort={sortPeopleBy}
+            />
           </>
         ) : (
           <p className="mt-4 text-stone-600">Loading network tracker…</p>
@@ -248,13 +273,42 @@ function TrackerCard({ title, groups }: { title: string; groups: TrackerGroup[] 
   )
 }
 
-function PeopleList({ people }: { people: TrackerPerson[] }) {
+function PeopleList({
+  people,
+  sortKey,
+  sortDirection,
+  onSort,
+}: {
+  people: TrackerPerson[]
+  sortKey: SortKey
+  sortDirection: SortDirection
+  onSort: (key: SortKey) => void
+}) {
   return (
     <div className="mt-5 overflow-hidden rounded-xl border border-stone-300 bg-white">
       <div className="grid grid-cols-[minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)] gap-3 border-b border-stone-200 bg-stone-100 px-4 py-2 font-sans text-xs tracking-wide text-stone-500 uppercase">
-        <span>Person</span>
-        <span>Company</span>
-        <span>Geographic area</span>
+        {COLUMNS.map((column) => (
+          <button
+            key={column.key}
+            type="button"
+            onClick={() => onSort(column.key)}
+            aria-sort={
+              sortKey === column.key
+                ? sortDirection === "asc"
+                  ? "ascending"
+                  : "descending"
+                : "none"
+            }
+            className={`flex items-center gap-1 text-left uppercase ${
+              sortKey === column.key ? "text-stone-900" : "text-stone-500"
+            }`}
+          >
+            {column.label}
+            <span aria-hidden="true">
+              {sortKey === column.key ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+            </span>
+          </button>
+        ))}
       </div>
       {people.map((person) => (
         <div
@@ -270,6 +324,12 @@ function PeopleList({ people }: { people: TrackerPerson[] }) {
       ))}
     </div>
   )
+}
+
+function sortValue(person: TrackerPerson, key: SortKey) {
+  if (key === "company") return person.companies.join(", ")
+  if (key === "location") return person.location
+  return person.name
 }
 
 function compare(left: string, right: string) {

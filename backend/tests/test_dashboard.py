@@ -142,6 +142,26 @@ class DashboardTests(unittest.TestCase):
         berkeley = next(row for row in tracker["locations"] if row["name"] == "Berkeley, CA")
         self.assertEqual(berkeley["count"], 2)
 
+    def test_tracker_sorts_widest_coverage_first_and_unknown_last(self):
+        with self.Session() as db:
+            db.add(
+                Person(
+                    id="p-nowhere",
+                    name="Nia Ford",
+                    bio="No location on file.",
+                    interests="[]",
+                    skills="[]",
+                )
+            )
+            db.commit()
+
+        locations = self.client.get("/network/tracker").json()["locations"]
+        self.assertEqual([row["count"] for row in locations], sorted(
+            (row["count"] for row in locations), reverse=True
+        ))
+        self.assertEqual(locations[0]["name"], "Berkeley, CA")
+        self.assertEqual(locations[-1]["name"], "Unknown")
+
     def test_extractor_keeps_location(self):
         payload = _normalize(
             {

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Iterable
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -8,6 +9,8 @@ from ..models import Organization, Person, PersonProfile, Relationship
 from ..schemas import NetworkTrackerOut, TrackerGroupOut, TrackerPersonOut
 
 router = APIRouter(prefix="/network", tags=["network"])
+
+UNKNOWN_LOCATION = "Unknown"
 
 
 @router.get("/tracker", response_model=NetworkTrackerOut)
@@ -69,15 +72,15 @@ def _organization_groups(
     for person in people:
         for name in getattr(person, field):
             grouped[name].append(person.name)
-    return [
+    return _by_coverage(
         TrackerGroupOut(
             name=name,
             kind=kind,
             count=len(names),
             people=sorted(names),
         )
-        for name, names in sorted(grouped.items())
-    ]
+        for name, names in grouped.items()
+    )
 
 
 def _all_organization_groups(
@@ -96,27 +99,39 @@ def _all_organization_groups(
                 continue
             grouped[org.name].append(person_name)
             kinds[org.name] = org.type or "organization"
-    return [
+    return _by_coverage(
         TrackerGroupOut(
             name=name,
             kind=kinds.get(name, "organization"),
             count=len(set(names)),
             people=sorted(set(names)),
         )
-        for name, names in sorted(grouped.items())
-    ]
+        for name, names in grouped.items()
+    )
 
 
 def _location_groups(people: list[TrackerPersonOut]) -> list[TrackerGroupOut]:
     grouped: dict[str, list[str]] = defaultdict(list)
     for person in people:
-        grouped[person.location or "Unknown"].append(person.name)
-    return [
+        grouped[person.location or UNKNOWN_LOCATION].append(person.name)
+    return _by_coverage(
         TrackerGroupOut(
             name=name,
             kind="location",
             count=len(names),
             people=sorted(names),
         )
-        for name, names in sorted(grouped.items())
-    ]
+        for name, names in grouped.items()
+    )
+
+
+def _by_coverage(groups: Iterable[TrackerGroupOut]) -> list[TrackerGroupOut]:
+    """Widest coverage first, with unplaced people last and ties broken by name."""
+    return sorted(
+        groups,
+        key=lambda group: (
+            group.name == UNKNOWN_LOCATION,
+            -group.count,
+            group.name.lower(),
+        ),
+    )
