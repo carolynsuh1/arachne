@@ -1,0 +1,209 @@
+/* /map — styled after the Figma "cartography-canvas" preview. */
+
+.map-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.map-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 40px 40px;
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.map-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.map-goal {
+  margin-top: 4px;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--white);
+}
+
+.map-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 560px;
+  overflow: hidden;
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+  background-size: 100px 100px;
+  background-position: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.map-origin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.map-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1px solid rgba(6, 182, 212, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.map-thread {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1.5px;
+  background: rgba(6, 182, 212, 0.4);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+.node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 8px 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.node-me {
+  background: var(--raised);
+  border-color: var(--cyan);
+  filter: drop-shadow(0 4px 6px rgba(6, 182, 212, 0.2));
+}
+
+.node-new {
+  animation: node-in 0.35s ease-out;
+}
+
+@keyframes node-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+}
+
+.node-avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan);
+}
+
+.node-avatar-me {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: var(--cyan);
+}
+
+.node-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.node-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.map-empty {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(8, 10, 16, 0.75);
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.modal h2 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--white);
+}
+
+.modal-sub {
+  margin: 4px 0 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .map-main {
+    padding: 16px;
+  }
+
+  .map-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

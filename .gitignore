@@ -23,3 +23,14 @@ frontend/.env
 
 research-service/.private/
 research-service/node_modules/
+
+# Arachne (Next.js app at repo root)
+node_modules/
+.next/
+.env
+*.db
+*.db-journal
+prisma/*.db
+uploads/
+next-env.d.ts
+*.tsbuildinfo
