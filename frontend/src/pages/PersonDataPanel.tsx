@@ -22,7 +22,7 @@ function Fields({value}:{value:unknown}) {
  }
  return <span>{String(value)}</span>
 }
-export function PersonDataPanel({target,onSelect,name,result,onBrief}:{target?:Person;onSelect:(p:Person)=>void;name:string;result:ResearchResult|null;onBrief:(r:ResearchResult)=>void}) {
+export function PersonDataPanel({target,onSelect,name,result,onBrief,loadingBrief=false}:{target?:Person;onSelect:(p:Person)=>void;name:string;result:ResearchResult|null;onBrief:(r:ResearchResult)=>void;loadingBrief?:boolean}) {
  const [people,setPeople]=useState<Person[]>([])
  const [history,setHistory]=useState<History|null>(null)
  const [error,setError]=useState("")
@@ -34,7 +34,7 @@ export function PersonDataPanel({target,onSelect,name,result,onBrief}:{target?:P
  return <section className="space-y-4 rounded-xl border border-stone-300 p-5">
   <h2 className="text-2xl">Saved person data</h2>
   <p className="text-sm text-stone-600">Choose the person who owns this research and resume. Saved records stay available when you reopen them.</p>
-  <select aria-label="Saved person" disabled={busy} value={target?.id??""} onChange={e=>{const p=people.find(p=>p.id===e.target.value);if(p)void perform(async()=>{if(result?.brief_id&&!target)await call(`/${p.id}/research/${result.brief_id}`,{method:"POST"});onSelect(p)})}} className="w-full rounded border p-2"><option value="" disabled>Select a person</option>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
+  <select aria-label="Saved person" disabled={busy} value={target?.id??""} onChange={e=>{const p=people.find(p=>p.id===e.target.value);if(p){setError("");onSelect(p)}}} className="w-full rounded border p-2"><option value="" disabled>Select a person</option>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
   {!target&&<button disabled={busy||!name.trim()} className="rounded border px-3 py-2" onClick={()=>void perform(async()=>{
    const p=await call<Person>("",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})})
    if(result?.brief_id)await call(`/${p.id}/research/${result.brief_id}`,{method:"POST"})
@@ -52,7 +52,7 @@ export function PersonDataPanel({target,onSelect,name,result,onBrief}:{target?:P
   {error&&<p role="alert" className="text-red-700">{error}</p>}
   {history&&<div className="space-y-3">
    <h3>Research history ({history.research.length})</h3>
-   {history.research.map(entry=><button key={entry.id} className="mr-3 underline" onClick={()=>onBrief({...entry.result,brief_id:entry.id,saved:true})}>Open brief · {new Date(entry.created_at+"Z").toLocaleString()}</button>)}
+   {history.research.map(entry=><button key={entry.id} disabled={busy||loadingBrief} className="mr-3 underline disabled:opacity-50" onClick={()=>onBrief({...entry.result,brief_id:entry.id,saved:true})}>Open brief · {new Date(entry.created_at+"Z").toLocaleString()}</button>)}
    <h3>Resumes ({history.resumes.length})</h3>
    {history.resumes.map(entry=><details key={entry.id} className="rounded border p-3"><summary className="cursor-pointer">Resume · {new Date(entry.created_at+"Z").toLocaleString()} · {entry.result.supportedFields} supported fields</summary><p className="my-3 text-xs text-stone-500">{entry.result.verification}</p><Fields value={entry.result.profile}/></details>)}
   </div>}
