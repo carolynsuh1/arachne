@@ -38,6 +38,10 @@ npm run dev:all             # web on :3000, API on :8000; Ctrl+C stops both
 
 `npm run dev:api` starts only the backend. For **Research** on a person, also start the research service with `npm run dev:all -- --research` (copy `research-service/.env.example` to `research-service/.env` and set `FIRECRAWL_API_KEY` and `OPENAI_API_KEY`; it won't start without them, and research is paid, so it is opt-in and always asks before running). Practice conversations, Brain dump, and meeting extraction work without provider keys (meeting extraction uses its built-in reader). If the backend is down, `/map` still works with your saved people and shows a notice.
 
+After pulling schema changes, run `npx prisma db push` again. Existing SQLite files are not altered by `create_all` on the FastAPI side; Arachne needs the Prisma columns (`backendPersonId`, `backendGoalId`) or TypeScript and the map APIs break.
+
+If `/map` is missing the feature toolbar (Talk to me, New meeting, …) or Next returns `Cannot find module './570.js'`, the `.next` cache is stale. Stop the web app, `rm -rf .next`, then `npm run dev`.
+
 **Deepgram voice:** set `DEEPGRAM_API_KEY` in `backend/.env`, and set the same non-empty `INTERNAL_API_KEY` in both root `.env` and `backend/.env`. The browser receives only a 90-second signed voice token; it never receives either secret. The configured Deepgram Voice Agent was verified with no `OPENAI_API_KEY`: Deepgram accepted its hosted `open_ai` thinker using only the Deepgram key. `OPENAI_API_KEY` is therefore optional for voice, though other provider-backed features may still use it.
 
 Backend tests (macOS/Linux): `cd backend && .venv/bin/python -m unittest discover -s tests -q`.
