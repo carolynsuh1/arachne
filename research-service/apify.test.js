@@ -10,3 +10,22 @@ test('public profile photos survive normalization; unsafe URLs are discarded',()
  assert.equal(normalizeApifyProfile({...profile,photo:'https://evil.example/photo'},'maya').profile.photoUrl,undefined);
  assert.equal(normalizeApifyProfile({...profile,photo:'javascript:alert(1)'},'maya').profile.photoUrl,undefined);
 });
+test('legacy cached profiles are refreshed once to capture photos, then reused',async()=>{
+ const {mkdtemp,writeFile,rm}=await import('node:fs/promises');
+ const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const {profileCachePath}=await import('./cloud-profiles.js');
+ const dir=await mkdtemp(join(tmpdir(),'photo-cache-'));
+ try {
+  const old=normalizeApifyProfile(profile,'maya');delete old.photoChecked;
+  await writeFile(profileCachePath(dir,'apify-v1:maya'),JSON.stringify(old));
+  let runs=0;
+  const p=cloudProfiles({}, {APIFY_TOKEN:'fixture',PROFILE_CACHE_DIR:dir},async(url,options)=>{
+   if(options.method==='POST'){runs++;return Response.json({data:{id:'photo-run',status:'SUCCEEDED',defaultDatasetId:'photos'}});}
+   return Response.json([{...profile,photo:'https://media.licdn.com/photo.jpg'}]);
+  });
+  const signal=new AbortController().signal;
+  assert.equal((await p.scrape('https://www.linkedin.com/in/maya',signal)).profile.photoUrl,'https://media.licdn.com/photo.jpg');
+  assert.equal((await p.scrape('https://www.linkedin.com/in/maya',signal)).cached,true);
+  assert.equal(runs,1);
+ } finally {await rm(dir,{recursive:true,force:true});}
+});

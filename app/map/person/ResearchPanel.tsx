@@ -42,7 +42,11 @@ export default function ResearchPanel({ person }: { person: Person }) {
     setError("");
     const res = await postJson<{ result: ResearchResult }>(`/api/net/people/${person.id}/research`, { profileUrl });
     setBusy(null);
-    if (res.ok) return setSaved(res.data.result);
+    if (res.ok) {
+      setSaved(res.data.result);
+      if (res.data.result.status === "ready") window.dispatchEvent(new CustomEvent("person-researched", { detail: person.id }));
+      return;
+    }
     setError(
       res.body.code === "backend_error"
         ? `${res.error} The research service needs FIRECRAWL_API_KEY and OPENAI_API_KEY in research-service/.env; start it with "npm run dev:all -- --research".`

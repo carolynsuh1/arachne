@@ -12,10 +12,12 @@ export async function GET(_req: Request, {params}: Context) {
   const {user,response}=await requireApiUser(); if(!user)return response;
   const person=await prisma.person.findFirst({where:{id:(await params).id,userId:user.id}});
   if(!person)return jsonError("Person not found.",404);
+  for (const file of [photoPath(person.id), photoPath(`${person.id}.research`)]) {
   try {
-    const photo=JSON.parse(await readFile(photoPath(person.id),"utf8"));
+    const photo=JSON.parse(await readFile(file,"utf8"));
     return new Response(new Uint8Array(Buffer.from(photo.data,"base64")),{headers:{"Content-Type":photo.type,"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
   } catch { /* Fall through to a verified profile photo; never start a paid scrape here. */ }
+  }
   if(person.backendPersonId){
     const brief=await getSavedResearch(person.backendPersonId).catch(()=>null);
     try {

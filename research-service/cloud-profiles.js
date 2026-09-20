@@ -19,8 +19,8 @@ export function normalizeProfile(raw,handle,retrievedAt=new Date().toISOString()
  const clean=v=>typeof v==='string'&&!v.includes('*')?v:undefined;
  const experience=(data.experience||[]).map(x=>({company:clean(x.company_name),position:clean(x.position),summary:clean(x.summary),starts_at:clean(x.starts_at),ends_at:clean(x.ends_at)})).filter(x=>Object.values(x).some(Boolean));
  const education=(data.education||[]).map(x=>({school:clean(x.school||x.college_name),degree:clean(x.degree),field_of_study:clean(x.field_of_study),starts_at:clean(x.starts_at),ends_at:clean(x.ends_at)})).filter(x=>x.school);
- const professional={name:data.fullName,headline:clean(data.headline),about:clean(data.about),experience,education};
- return {url:`https://www.linkedin.com/in/${handle}/`,title:data.fullName,text:'Provider evidence may be incomplete. Blank and masked fields are unavailable; do not infer job titles, dates, or degrees.\n\n'+JSON.stringify(professional,null,2),kind:'profile_provider',retrievedAt};
+ const professional={photoUrl:profilePhoto(data.profile_photo??data.profile_pic_url??data.profile_picture),name:data.fullName,headline:clean(data.headline),about:clean(data.about),experience,education};
+ return {url:`https://www.linkedin.com/in/${handle}/`,title:data.fullName,profile:professional,text:'Provider evidence may be incomplete. Blank and masked fields are unavailable; do not infer job titles, dates, or degrees.\n\n'+JSON.stringify(professional,null,2),kind:'profile_provider',photoChecked:true,retrievedAt};
 }
 export function normalizeApifyProfile(raw,handle,retrievedAt=new Date().toISOString()){
  const d=Array.isArray(raw)?raw[0]:raw;
@@ -30,7 +30,7 @@ export function normalizeApifyProfile(raw,handle,retrievedAt=new Date().toISOStr
  const profile={photoUrl:profilePhoto(d.photo??d.profilePicture??d.profilePictureUrl),name:[d.firstName,d.lastName].filter(Boolean).join(' '),headline:text(d.headline),about:text(d.about),
   experience:(d.experience??[]).map(x=>({company:text(x.companyName),position:text(x.position),summary:text(x.description),starts_at:date(x.startDate),ends_at:date(x.endDate)})),
   education:(d.education??[]).map(x=>({school:text(x.schoolName),degree:text(x.degree),field_of_study:text(x.fieldOfStudy),starts_at:date(x.startDate),ends_at:date(x.endDate),summary:text(x.description)}))};
- return {url:`https://www.linkedin.com/in/${handle}/`,title:profile.name,text:JSON.stringify(profile,null,2),profile,provider:'apify',kind:'profile_provider',retrievedAt};
+ return {url:`https://www.linkedin.com/in/${handle}/`,title:profile.name,text:JSON.stringify(profile,null,2),profile,provider:'apify',kind:'profile_provider',photoChecked:true,retrievedAt};
 }
 export function profileCachePath(dir,handle){return join(dir,createHash('sha256').update(handle).digest('hex')+'.json');}
 export function cloudProfiles(provider,env=process.env,transport=fetch){
@@ -39,7 +39,7 @@ export function cloudProfiles(provider,env=process.env,transport=fetch){
   const cacheKey=env.APIFY_TOKEN?'apify-v1:'+handle:handle;
   let cached=cache.get(handle);
   if(!cached&&env.PROFILE_CACHE_DIR){try{cached=JSON.parse(await readFile(profileCachePath(env.PROFILE_CACHE_DIR,cacheKey),'utf8'));}catch{}}
-  if(cached&&cached.url===`https://www.linkedin.com/in/${handle}/`&&typeof cached.text==='string'&&Date.now()-Date.parse(cached.retrievedAt)<ttl){cache.set(handle,cached);return {...cached,cached:true};}
+  if(cached&&cached.photoChecked===true&&cached.url===`https://www.linkedin.com/in/${handle}/`&&typeof cached.text==='string'&&Date.now()-Date.parse(cached.retrievedAt)<ttl){cache.set(handle,cached);return {...cached,cached:true};}
   let result;
   if(env.APIFY_TOKEN){
    const api=async(path,options={})=>{
