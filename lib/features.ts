@@ -23,6 +23,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     endpoints: ["WS /voice/session?mode=network&goal_id=…"],
     teamNav: "Talk to your network",
     phase: 5,
+    ready: true,
   },
   {
     id: "ask",
@@ -46,6 +47,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     ],
     teamNav: "Meetings · New Meeting",
     phase: 5,
+    ready: true,
   },
   {
     id: "braindump",
@@ -111,5 +113,6 @@ export const PERSON_FEATURES: Feature[] = [
     endpoints: ["POST /meetings", "GET /meetings/people/{id}/timeline"],
     teamNav: "Meetings · New Meeting",
     phase: 5,
+    ready: true,
   },
 ];

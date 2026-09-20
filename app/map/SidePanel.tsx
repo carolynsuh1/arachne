@@ -6,7 +6,9 @@ import type { GoalViewData } from "@/lib/goal-view";
 import type { MapPerson } from "@/lib/network";
 import AskPanel, { type AskState } from "./AskPanel";
 import GoalViewPanel from "./GoalViewPanel";
+import MeetingPanel from "./MeetingPanel";
 import PlanPanel from "./PlanPanel";
+import VoicePanel from "./VoicePanel";
 import PersonFeaturePanel, { LIVE_PERSON_FEATURES } from "./person/PersonFeaturePanel";
 
 export type Person = MapPerson;
@@ -104,6 +106,16 @@ export default function SidePanel({
             onOpenPerson={(p) => onOpen({ kind: "person", person: p })}
             onAdded={onAdded}
           />
+        </div>
+      ) : view.feature.id === "talk" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <VoicePanel />
+        </div>
+      ) : view.feature.id === "meeting" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <MeetingPanel people={people} />
         </div>
       ) : view.feature.id === "braindump" ? (
         <div className="side-body">

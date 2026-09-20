@@ -101,10 +101,12 @@ Click a person → panel → action. Every per-person route checks that the call
 - **Verified:** live backend (scoped and network answers, follow-up question with history, validation 400s); the panel in the browser (scope switch, chips, add-from-chip, glow on nodes and threads, conversation kept across panels, no overflow); isolation (a second user with an empty map can't see the first user's people).
 - **Not done:** the answer's per-sentence highlight *timing* (`at_ms`, meant to sync with speech) is ignored, since answers are text; it becomes relevant with voice in phase 5.
 
-### Phase 5: Voice and live meetings
-- **Talk to me**: Next mints a short-lived signed token (`/api/voice-token`); browser opens `WS /voice/session?mode=network&goal_id=…&token=…`; backend verifies the token before proxying to Deepgram. Needs mic permission UI and reconnect handling (the backend already sends `reconnectable`).
-- **New meeting / Log a meeting**: `/meetings` create, stream audio chunks (`/chunks`), pause/resume/end, then **confirm** what was learned (`/confirm`). "Ask meetings" via `/meetings/ask/query`.
-- **Done when:** a spoken conversation and a recorded meeting both update the map.
+### Phase 5: Voice and live meetings: DONE (mic hardware not verified)
+- **Talk to me:** authenticated `POST /api/voice-token` mints a 90-second HMAC token from `INTERNAL_API_KEY`; the browser then opens the only allowed direct backend connection, `WS /voice/session`. The backend rejects missing, expired and tampered tokens before connecting to Deepgram, binds the requested goal, and passes the token's allowed backend person ids into every voice tool. Person search, lookup, suggestions, relationships, meetings, drafts and reminder writes cannot escape that set.
+- The map voice client sends PCM16 mono at 16 kHz, plays Deepgram PCM16 at 24 kHz, and shows idle/connecting/listening/thinking/speaking/error states, transcript, tool results, microphone-denied help, clean stop, and reconnect only when the backend says an error is reconnectable. Reminder writes still require spoken confirmation; a pending tool result also exposes a **Confirm in voice** UI action.
+- **New meeting / Log a meeting:** authenticated Next routes create and list meetings, save live notes, pause/resume/end, review extracted cards and suggested people, and confirm before anything updates network memory. A live meeting may attach the voice session with its `meeting_id`; the backend verifies all of that meeting's people are allowed by the voice token. Per-person history includes the backend timeline.
+- **Provider verification:** the configured Deepgram account accepted `think.provider.type = open_ai` with only `DEEPGRAM_API_KEY`; no `OPENAI_API_KEY` was needed. A real backend WebSocket accepted the signed token and 32,000 bytes of synthetic PCM16. Browser microphone capture/playback was not hardware-tested.
+- **Operational requirement:** voice additionally requires the same non-empty `INTERNAL_API_KEY` in root `.env` and `backend/.env`. Missing-key errors are non-reconnectable; an offline backend remains a recoverable UI error.
 
 ### Phase 6: Multi-user and hardening
 - Add `owner_id` to backend tables; enforce from `X-User-Id`; migrate existing rows.
@@ -114,7 +116,7 @@ Click a person → panel → action. Every per-person route checks that the call
 
 ## Risks
 
-- **Voice/meetings need real keys** (Deepgram, OpenAI) and a mic; can't be verified without them.
+- **Voice needs Deepgram and a mic.** The Deepgram Voice Agent's hosted OpenAI thinker worked without a separately supplied `OPENAI_API_KEY`; meeting extraction falls back to the built-in reader when that key is absent.
 - **Two auth models.** Until phase 6, anyone who can reach `:8000` directly can read the network; keep it bound to localhost in dev and behind the internal key in any shared environment.
 - **Backend has no migrations** (SQLite created from models); schema changes need a reset or a hand migration.
 

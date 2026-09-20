@@ -20,6 +20,7 @@ from ..pipeline.deepgram import (
     voice_agent_settings,
 )
 from ..services.voice_tools import run_voice_tool
+from ..voice_token import VoiceTokenError, verify_voice_token
 
 router = APIRouter(tags=["voice"])
 
@@ -30,8 +31,22 @@ async def voice_session(
     mode: str = "network",
     meeting_id: str = "",
     goal_id: str = "",
+    token: str = "",
 ):
     await client.accept()
+    try:
+        claims = verify_voice_token(token)
+    except VoiceTokenError as exc:
+        await client.send_json({"type": "Error", "description": str(exc), "reconnectable": False})
+        await client.close(code=1008)
+        return
+    allowed_person_ids = {
+        str(person_id) for person_id in claims["person_ids"] if str(person_id).strip()
+    }
+    if goal_id and goal_id != str(claims.get("goal_id", "")):
+        await client.send_json({"type": "Error", "description": "Goal is outside this voice session.", "reconnectable": False})
+        await client.close(code=1008)
+        return
     try:
         key = api_key()
     except DeepgramConfigurationError as exc:
@@ -43,10 +58,17 @@ async def voice_session(
     with SessionLocal() as db:
         goal = db.get(Goal, goal_id) if goal_id else None
         goal_context = goal.text if goal else ""
-        if meeting_id and not db.get(Meeting, meeting_id):
-            await client.send_json({"type": "Error", "description": "Meeting not found.", "reconnectable": False})
-            await client.close(code=1008)
-            return
+        if meeting_id:
+            meeting = db.get(Meeting, meeting_id)
+            if not meeting:
+                await client.send_json({"type": "Error", "description": "Meeting not found.", "reconnectable": False})
+                await client.close(code=1008)
+                return
+            meeting_people = set(json.loads(meeting.person_ids_json or "[]"))
+            if not meeting_people or not meeting_people.issubset(allowed_person_ids):
+                await client.send_json({"type": "Error", "description": "Meeting is outside this voice session.", "reconnectable": False})
+                await client.close(code=1008)
+                return
 
     try:
         async with websockets.connect(
@@ -59,7 +81,15 @@ async def voice_session(
             await agent.send(json.dumps(voice_agent_settings(mode, goal_context)))
             tasks = {
                 asyncio.create_task(_client_to_agent(client, agent)),
-                asyncio.create_task(_agent_to_client(agent, client, meeting_id)),
+                asyncio.create_task(
+                    _agent_to_client(
+                        agent,
+                        client,
+                        meeting_id,
+                        allowed_person_ids,
+                        str(claims.get("goal_id", "")),
+                    )
+                ),
             }
             done, pending = await asyncio.wait(
                 tasks, return_when=asyncio.FIRST_COMPLETED
@@ -109,7 +139,13 @@ async def _client_to_agent(client: WebSocket, agent) -> None:
                 await agent.send(json.dumps(payload))
 
 
-async def _agent_to_client(agent, client: WebSocket, meeting_id: str) -> None:
+async def _agent_to_client(
+    agent,
+    client: WebSocket,
+    meeting_id: str,
+    allowed_person_ids: set[str],
+    allowed_goal_id: str,
+) -> None:
     async for message in agent:
         if isinstance(message, bytes):
             await client.send_bytes(message)
@@ -124,7 +160,13 @@ async def _agent_to_client(agent, client: WebSocket, meeting_id: str) -> None:
                 except json.JSONDecodeError:
                     arguments = {}
                 with SessionLocal() as db:
-                    result = run_voice_tool(db, function.get("name", ""), arguments)
+                    result = run_voice_tool(
+                        db,
+                        function.get("name", ""),
+                        arguments,
+                        allowed_person_ids,
+                        allowed_goal_id,
+                    )
                 response = {
                     "type": "FunctionCallResponse",
                     "id": function.get("id"),

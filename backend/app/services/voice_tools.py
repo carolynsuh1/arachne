@@ -11,31 +11,48 @@ from sqlalchemy.orm import Session
 from ..models import Goal, InteractionMemory, Meeting, Person, Relationship, Reminder
 
 
-def run_voice_tool(db: Session, name: str, arguments: dict) -> dict:
+def run_voice_tool(
+    db: Session,
+    name: str,
+    arguments: dict,
+    allowed_person_ids: set[str] | None = None,
+    allowed_goal_id: str | None = None,
+) -> dict:
+    allowed = allowed_person_ids
     query = str(arguments.get("query", "")).casefold()
     if name == "search_people":
         rows = [
             person for person in db.query(Person).order_by(Person.name).all()
+            if (allowed is None or person.id in allowed)
             if query in f"{person.name} {person.bio} {person.interests} {person.skills}".casefold()
         ]
         return {"people": [_person(row) for row in rows[:8]]}
     if name == "get_person":
         row = db.get(Person, str(arguments.get("id", "")))
+        if row and allowed is not None and row.id not in allowed:
+            row = None
         return {"person": _person(row) if row else None}
     if name in {"search_meetings", "search_meeting_memory"}:
         rows = db.query(Meeting).order_by(Meeting.started_at.desc()).all()
         matches = [
             row for row in rows
+            if _meeting_allowed(row, allowed)
             if query in f"{row.title} {row.transcript} {row.summary} {row.cards_json}".casefold()
         ]
         return {"meetings": [_meeting(row) for row in matches[:6]]}
     if name == "get_meeting":
         row = db.get(Meeting, str(arguments.get("id", "")))
+        if row and not _meeting_allowed(row, allowed):
+            row = None
         return {"meeting": _meeting(row) if row else None}
     if name == "search_relationships":
-        people = {person.id: person.name for person in db.query(Person).all()}
+        people = {
+            person.id: person.name for person in db.query(Person).all()
+            if allowed is None or person.id in allowed
+        }
         rows = [
             row for row in db.query(Relationship).all()
+            if row.source_id in people and row.target_id in people
             if query in f"{row.type} {row.evidence} {people.get(row.source_id, '')} {people.get(row.target_id, '')}".casefold()
         ]
         return {"relationships": [
@@ -48,13 +65,19 @@ def run_voice_tool(db: Session, name: str, arguments: dict) -> dict:
             for row in rows[:8]
         ]}
     if name == "get_goal_context":
-        rows = db.query(Goal).order_by(Goal.created_at.desc()).all()
+        rows = [
+            row for row in db.query(Goal).order_by(Goal.created_at.desc()).all()
+            if allowed_goal_id is None or row.id == allowed_goal_id
+        ]
         return {"goals": [
             {"id": row.id, "text": row.text}
             for row in rows if not query or query in row.text.casefold()
         ][:8]}
     if name == "suggest_person":
-        rows = db.query(Person).all()
+        rows = [
+            row for row in db.query(Person).all()
+            if allowed is None or row.id in allowed
+        ]
         scored = sorted(
             rows,
             key=lambda row: (
@@ -64,7 +87,7 @@ def run_voice_tool(db: Session, name: str, arguments: dict) -> dict:
         )
         return {"people": [_person(row) for row in scored[:5]]}
     if name == "generate_followup":
-        person = _find_person(db, str(arguments.get("person", "")))
+        person = _find_person(db, str(arguments.get("person", "")), allowed)
         if not person:
             return {"error": "Person not found."}
         memory = (
@@ -87,7 +110,7 @@ def run_voice_tool(db: Session, name: str, arguments: dict) -> dict:
     if name in {"create_reminder", "create_followup_task"}:
         if arguments.get("confirmed") is not True:
             return {"needs_confirmation": True, "message": "Ask the user to confirm this write."}
-        person = _find_person(db, str(arguments.get("person", "")))
+        person = _find_person(db, str(arguments.get("person", "")), allowed)
         if not person:
             return {"error": "Person not found; ask which saved person they mean."}
         reminder = Reminder(
@@ -120,12 +143,15 @@ def run_voice_tool(db: Session, name: str, arguments: dict) -> dict:
     return {"error": f"Unknown tool: {name}"}
 
 
-def _find_person(db: Session, value: str) -> Person | None:
+def _find_person(
+    db: Session, value: str, allowed_person_ids: set[str] | None = None
+) -> Person | None:
     wanted = value.casefold().strip()
     return next(
         (
             person for person in db.query(Person).all()
-            if person.id == value or wanted in person.name.casefold()
+            if (allowed_person_ids is None or person.id in allowed_person_ids)
+            and (person.id == value or wanted in person.name.casefold())
         ),
         None,
     )
@@ -151,6 +177,13 @@ def _meeting(row: Meeting) -> dict:
         "raw_transcript": row.transcript,
         "confirmed_summary": row.summary if row.status == "confirmed" else "",
     }
+
+
+def _meeting_allowed(row: Meeting, allowed_person_ids: set[str] | None) -> bool:
+    if allowed_person_ids is None:
+        return True
+    people = set(json.loads(row.person_ids_json or "[]"))
+    return bool(people) and people.issubset(allowed_person_ids)
 
 
 def _parse_due(value: str) -> datetime | None:

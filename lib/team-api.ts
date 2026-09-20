@@ -201,5 +201,53 @@ export const updateFollowUp = (reminderId: string, input: { action: string; days
     body: JSON.stringify(input),
   });
 
+// ---- Phase 5: meetings ----
+
+export type Meeting = {
+  id: string;
+  title: string;
+  meeting_type: string;
+  person_ids: string[];
+  person_names: string[];
+  goal_id: string | null;
+  goal_text: string;
+  status: string;
+  transcript: string;
+  summary: string;
+  cards: BrainDumpCard[];
+  introductions: Introduction[];
+  tags: string[];
+  started_at: string;
+  ended_at: string | null;
+  confirmed_at: string | null;
+};
+export type MeetingLive = { meeting: Meeting; extraction: Extraction };
+export type TimelineEvent = { id: string; kind: string; title: string; detail: string; at: string };
+
+export const startMeeting = (input: {
+  person_ids: string[];
+  goal_id?: string;
+  goal_text: string;
+  meeting_type: string;
+  title: string;
+}) => teamFetch<Meeting>("/meetings", { method: "POST", body: JSON.stringify(input) });
+
+export const listMeetings = () => teamFetch<Meeting[]>("/meetings");
+export const getMeeting = (id: string) => teamFetch<Meeting>(`/meetings/${encodeURIComponent(id)}`);
+export const updateMeetingTranscript = (id: string, text: string) =>
+  teamFetch<MeetingLive>(`/meetings/${encodeURIComponent(id)}/chunks`, {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+export const changeMeetingState = (id: string, action: "pause" | "resume" | "end") =>
+  teamFetch<Meeting | MeetingLive>(`/meetings/${encodeURIComponent(id)}/${action}`, { method: "POST" });
+export const confirmMeeting = (id: string, input: { cards: BrainDumpCard[]; introductions: Introduction[] }) =>
+  teamFetch<{ meeting: Meeting; reminders: Reminder[]; created_people: string[] }>(
+    `/meetings/${encodeURIComponent(id)}/confirm`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+export const getPersonTimeline = (personId: string) =>
+  teamFetch<TimelineEvent[]>(`/meetings/people/${encodeURIComponent(personId)}/timeline`);
+
 /** Same normalisation the backend uses to decide two names are the same person. */
 export const normalizeName = (name: string) => name.trim().split(/\s+/).join(" ").toLowerCase();

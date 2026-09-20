@@ -36,9 +36,11 @@ Then run both together:
 npm run dev:all             # web on :3000, API on :8000; Ctrl+C stops both
 ```
 
-`npm run dev:api` starts only the backend. For **Research** on a person, also start the research service with `npm run dev:all -- --research` (copy `research-service/.env.example` to `research-service/.env` and set `FIRECRAWL_API_KEY` and `OPENAI_API_KEY`; it won't start without them, and research is paid, so it is opt-in and always asks before running). Practice conversations and Brain dump work without any keys. The backend works without API keys (it falls back to built-in heuristics); voice, research and meetings need the keys in `backend/.env.example`. If the backend is down, `/map` still works with your saved people and shows a notice.
+`npm run dev:api` starts only the backend. For **Research** on a person, also start the research service with `npm run dev:all -- --research` (copy `research-service/.env.example` to `research-service/.env` and set `FIRECRAWL_API_KEY` and `OPENAI_API_KEY`; it won't start without them, and research is paid, so it is opt-in and always asks before running). Practice conversations, Brain dump, and meeting extraction work without provider keys (meeting extraction uses its built-in reader). If the backend is down, `/map` still works with your saved people and shows a notice.
 
-Backend tests: `cd backend && .venv/Scripts/python -m pytest -q`.
+**Deepgram voice:** set `DEEPGRAM_API_KEY` in `backend/.env`, and set the same non-empty `INTERNAL_API_KEY` in both root `.env` and `backend/.env`. The browser receives only a 90-second signed voice token; it never receives either secret. The configured Deepgram Voice Agent was verified with no `OPENAI_API_KEY`: Deepgram accepted its hosted `open_ai` thinker using only the Deepgram key. `OPENAI_API_KEY` is therefore optional for voice, though other provider-backed features may still use it.
+
+Backend tests (macOS/Linux): `cd backend && .venv/bin/python -m unittest discover -s tests -q`.
 
 Optional shared secret: set the same `INTERNAL_API_KEY` in `.env` and `backend/.env`. The backend then rejects requests without it. Leave it empty if you also use the team's Vite app.
 
@@ -50,7 +52,7 @@ Optional shared secret: set the same `INTERNAL_API_KEY` in `.env` and `backend/.
 | `SESSION_SECRET` | iron-session cookie encryption key, 32+ chars |
 | `UPLOAD_DIR` | Where resumes are stored on disk (default `uploads`, outside `/public`) |
 | `TEAM_API_URL` | Team FastAPI backend, default `http://127.0.0.1:8000` (server-side only) |
-| `INTERNAL_API_KEY` | Optional shared secret sent to the backend (see above) |
+| `INTERNAL_API_KEY` | Shared backend secret; optional for HTTP-only use, required on both sides for signed voice tokens |
 | `NEXT_PUBLIC_TEAM_APP_URL` | Team's Vite app, used by "Open team app" links on `/map` |
 
 ## Pages
