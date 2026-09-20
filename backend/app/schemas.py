@@ -37,6 +37,7 @@ class GoalNetworkOut(BaseModel):
 class GraphNodeData(BaseModel):
     kind: str
     name: str
+    university: str | None = None
     bio: str | None = None
     interests: list[str] = []
     skills: list[str] = []

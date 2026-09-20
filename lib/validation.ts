@@ -32,6 +32,8 @@ export const goalSchema = z.object({
 export const personSchema = z.object({
   name: z.string().trim().min(1, "Enter a name.").max(100, "Name is too long."),
   university: z.string().trim().min(1, "Enter a university.").max(120, "University is too long."),
+  // Set when the user confirms "yes, that's the same person" after a duplicate-name conflict.
+  linkExistingId: z.string().trim().min(1).max(64).optional(),
 });
 
 export const RESUME_MAX_BYTES = 5 * 1024 * 1024;

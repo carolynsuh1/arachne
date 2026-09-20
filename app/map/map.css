@@ -78,6 +78,52 @@
   pointer-events: none;
 }
 
+/* Relationships that exist in the team network between two of your contacts. */
+.map-link {
+  position: absolute;
+  height: 0;
+  border-top: 1px dashed rgba(245, 158, 11, 0.55);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+.map-notice {
+  padding: 10px 14px;
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.map-legend {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend-line {
+  display: inline-block;
+  width: 24px;
+  height: 0;
+  margin-left: 8px;
+}
+
+.legend-thread {
+  margin-left: 0;
+  border-top: 1.5px solid rgba(6, 182, 212, 0.6);
+}
+
+.legend-link {
+  border-top: 1px dashed rgba(245, 158, 11, 0.8);
+}
+
 .node {
   position: absolute;
   display: flex;
@@ -90,6 +136,20 @@
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
   transform: translate(-50%, -50%);
   white-space: nowrap;
+}
+
+/* People are buttons: opening one shows its actions. */
+.node-person {
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.node-person:hover,
+.node-selected {
+  background: var(--raised);
+  border-color: var(--cyan);
 }
 
 .node-me {
@@ -154,6 +214,237 @@
   font-size: 13px;
   color: var(--muted);
   text-align: center;
+}
+
+/* ---------- Feature bar ---------- */
+.feature-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feature-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.feature-btn:hover,
+.feature-btn[aria-pressed="true"] {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.feature-btn-talk {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.talk-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--cyan);
+  border-radius: 50%;
+  animation: talk-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes talk-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(6, 182, 212, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talk-dot {
+    animation: none;
+  }
+}
+
+/* ---------- Side panel ---------- */
+.side-panel {
+  position: fixed;
+  top: 84px;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 380px;
+  max-width: 100%;
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.35);
+}
+
+.side-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.side-head h2 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--white);
+}
+
+.side-eyebrow,
+.side-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.side-eyebrow {
+  margin-bottom: 6px;
+  color: var(--cyan);
+}
+
+.side-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.side-back,
+.side-close {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.side-back {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.side-close {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.side-back:hover,
+.side-close:hover {
+  color: var(--white);
+}
+
+.side-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.side-blurb {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.side-action:hover {
+  border-color: var(--cyan);
+}
+
+.side-action span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.side-action small {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.side-status {
+  padding: 12px 14px;
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+}
+
+.status-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.side-status p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.endpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.endpoint-list code {
+  display: block;
+  padding: 6px 10px;
+  overflow-wrap: anywhere;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.side-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.side-note strong {
+  color: var(--text);
 }
 
 /* ---------- Modal ---------- */

@@ -44,6 +44,7 @@ def build_graph(db: Session) -> GraphOut:
             data=GraphNodeData(
                 kind="person",
                 name=person.name,
+                university=person.university or None,
                 bio=person.bio,
                 interests=json.loads(person.interests or "[]"),
                 skills=json.loads(person.skills or "[]"),

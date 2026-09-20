@@ -11,6 +11,7 @@ class Person(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
+    university: Mapped[str] = mapped_column(String, default="")
     bio: Mapped[str] = mapped_column(Text, default="")
     interests: Mapped[str] = mapped_column(Text, default="[]")
     skills: Mapped[str] = mapped_column(Text, default="[]")

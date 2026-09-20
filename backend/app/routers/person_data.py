@@ -31,11 +31,12 @@ def normalized(name):
 
 class PersonInput(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    university: str = Field(default="", max_length=120)
 
 
 @router.get("")
 def people(db: Session = Depends(get_db)):
-    return [{"id": p.id, "name": p.name} for p in db.query(Person).order_by(Person.name).all()]
+    return [{"id": p.id, "name": p.name, "university": p.university or ""} for p in db.query(Person).order_by(Person.name).all()]
 
 
 @router.post("")
@@ -46,10 +47,10 @@ def create_person(payload: PersonInput, db: Session = Depends(get_db)):
     # Same names are ambiguous: require selection, never silently merge people.
     if any(normalized(p.name) == normalized(name) for p in db.query(Person).all()):
         raise HTTPException(409, "A person with this name exists. Select their record before saving.")
-    person = Person(id=str(uuid4()), name=name)
+    person = Person(id=str(uuid4()), name=name, university=" ".join(payload.university.split()))
     db.add(person)
     db.commit()
-    return {"id": person.id, "name": person.name}
+    return {"id": person.id, "name": person.name, "university": person.university}
 
 
 @router.get("/{person_id}")
