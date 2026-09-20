@@ -162,3 +162,11 @@ class MeetingTranscriptSegment(Base):
     speaker: Mapped[str] = mapped_column(String, default="user")
     text: Mapped[str] = mapped_column(Text, nullable=False)
     captured_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class FollowUpState(Base):
+    __tablename__ = "follow_up_states"
+    reminder_id: Mapped[str] = mapped_column(String, primary_key=True)
+    outcome: Mapped[str] = mapped_column(String, default="active")
+    snoozed_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

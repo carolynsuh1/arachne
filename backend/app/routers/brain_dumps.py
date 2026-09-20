@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import BrainDumpItem, Goal, InteractionMemory, Person, Relationship, Reminder
+from ..models import FollowUpState, BrainDumpItem, Goal, InteractionMemory, Person, Relationship, Reminder
 from ..pipeline.llm import LLMError, call_terra, parse_json_object
 from ..schemas import (
     BrainDumpCard,
@@ -110,7 +110,7 @@ def confirm_brain_dump(payload: BrainDumpConfirmIn, db: Session = Depends(get_db
 @router.get("/upcoming", response_model=list[ReminderOut])
 def upcoming(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
     now = datetime.utcnow()
-    rows = db.query(Reminder).filter(Reminder.status != "completed").order_by(
+    rows = db.query(Reminder).filter(Reminder.status.notin_(["completed", "dismissed"]), ~Reminder.id.in_(db.query(FollowUpState.reminder_id).filter(FollowUpState.snoozed_until > datetime.utcnow()))).order_by(
         Reminder.due_at.is_(None), Reminder.due_at, Reminder.created_at
     ).limit(limit).all()
     for row in rows:
@@ -153,7 +153,7 @@ def brain_dump_action(payload: BrainDumpActionIn, db: Session = Depends(get_db))
         db.commit()
         db.refresh(reminder)
         return BrainDumpActionOut(
-            message=f"I'll remind you {due.strftime('%A, %B %-d')}.", reminder=reminder,
+            message=(f"Reminder saved for {due.strftime('%A, %B %d')}." if due else "Reminder saved without a deadline."), reminder=reminder,
         )
     return BrainDumpActionOut(message="Try asking me to set a reminder or who you should talk to next.")
 
@@ -174,7 +174,7 @@ def who_next(limit: int = Query(3, ge=1, le=5), db: Session = Depends(get_db)):
             path=["You", source.name, target.name],
             suggested_action=f"Ask {source.name} for an introduction to {target.name}.",
         ))
-    for reminder in db.query(Reminder).filter(Reminder.status != "completed").order_by(Reminder.due_at).all():
+    for reminder in db.query(Reminder).filter(Reminder.status.notin_(["completed", "dismissed"]), ~Reminder.id.in_(db.query(FollowUpState.reminder_id).filter(FollowUpState.snoozed_until > datetime.utcnow()))).order_by(Reminder.due_at).all():
         person = people.get(reminder.person_id)
         if not person or person.id in seen:
             continue
@@ -274,14 +274,14 @@ def _create_reminders(db: Session, person_id: str, interaction_id: str, cards: l
         if key in seen:
             continue
         seen.add(key)
-        due = happened_at + timedelta(days=7 if "next week" in card.text.casefold() else 14 if "2 weeks" in card.text.casefold() else 3)
+        due = _natural_due(card.text.casefold(), happened_at)
         row = Reminder(id=str(uuid4()), person_id=person_id, interaction_id=interaction_id, action=card.text, due_at=due, status="upcoming", notes="Created from coffee chat brain dump.")
         db.add(row)
         rows.append(row)
     return rows
 
 
-def _natural_due(text: str, now: datetime) -> datetime:
+def _natural_due(text: str, now: datetime) -> datetime | None:
     weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
     for index, name in enumerate(weekdays):
         if name in text:
@@ -291,7 +291,11 @@ def _natural_due(text: str, now: datetime) -> datetime:
     if match:
         amount = int(match.group(1)) * (7 if match.group(2) == "week" else 1)
         return now + timedelta(days=amount)
-    return now + timedelta(days=1)
+    if "tomorrow" in text:
+        return now + timedelta(days=1)
+    if "next week" in text:
+        return now + timedelta(days=7)
+    return None
 
 
 def _find_person(db: Session, name: str) -> Person | None:
