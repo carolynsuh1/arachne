@@ -8,6 +8,7 @@ import type {
   SuggestedIntroduction,
   WhoNext,
   NetworkTracker,
+  NetworkSearchResponse,
   ConversationMessage,
   CopilotTurn,
   PracticeFeedback,
@@ -70,6 +71,13 @@ export function fetchGoalGraph(goalId: string) {
 
 export function fetchNetworkTracker() {
   return request<NetworkTracker>("/network/tracker")
+}
+
+export function searchNetwork(query: string) {
+  return request<NetworkSearchResponse>("/network/search", {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  })
 }
 
 export function listInteractions() {
