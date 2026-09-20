@@ -15,6 +15,7 @@ export default async function ProfilePage() {
       <main className="app-main">
         <ProfileForm
           initial={{
+            linkedinUrl: p?.linkedinUrl ?? "",
             fullName: p?.fullName ?? "",
             university: p?.university ?? "",
             workExperience: p?.workExperience ?? "",

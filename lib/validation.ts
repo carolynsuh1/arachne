@@ -14,9 +14,16 @@ export const credentialsSchema = z.object({
     .max(72, "Password must be 72 characters or fewer."),
 });
 
+export const linkedinUrlSchema = z.string().trim().max(1500).refine(value => {
+  if (!value) return true;
+  try { const u = new URL(value); return u.protocol === "https:" && /(^|\.)linkedin\.com$/.test(u.hostname) && /^\/in\/[^/]+\/?$/.test(u.pathname) && !u.username && !u.password && !u.port; } catch { return false; }
+}, "Enter a LinkedIn profile URL, like https://www.linkedin.com/in/your-name/.").default("");
+export const signupSchema = credentialsSchema.extend({ linkedinUrl: linkedinUrlSchema });
+
 const longText = (label: string) => z.string().trim().max(4000, `${label} must be 4000 characters or fewer.`);
 
 export const profileSchema = z.object({
+  linkedinUrl: linkedinUrlSchema,
   fullName: z.string().trim().min(1, "Enter your name.").max(100, "Name is too long."),
   university: z.string().trim().max(120, "University is too long."),
   workExperience: longText("Work experience"),

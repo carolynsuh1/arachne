@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   if (!form) return jsonError("Invalid form submission.", 400);
 
   const parsed = profileSchema.safeParse({
+    linkedinUrl: form.get("linkedinUrl") ?? "",
     fullName: form.get("fullName") ?? "",
     university: form.get("university") ?? "",
     workExperience: form.get("workExperience") ?? "",

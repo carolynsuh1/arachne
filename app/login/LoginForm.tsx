@@ -20,6 +20,7 @@ export default function LoginForm() {
     const res = await postJson(mode === "login" ? "/api/auth/login" : "/api/auth/signup", {
       email: data.get("email"),
       password: data.get("password"),
+      ...(mode === "signup" ? { linkedinUrl: data.get("linkedinUrl") || "" } : {}),
     });
     if (res.ok) {
       router.push(res.data.redirect ?? "/profile");
@@ -69,6 +70,12 @@ export default function LoginForm() {
           />
           {fields.password && <small className="field-error">{fields.password}</small>}
         </label>
+        {!isLogin && <label className="field">
+          <span>Your LinkedIn (optional)</span>
+          <input name="linkedinUrl" type="url" maxLength={1500} placeholder="https://www.linkedin.com/in/your-name/" aria-invalid={!!fields.linkedinUrl} />
+          <small className="field-hint">Import your public experience and education on the next step. You can review everything before saving.</small>
+          {fields.linkedinUrl && <small className="field-error">{fields.linkedinUrl}</small>}
+        </label>}
         {error && !fields.email && !fields.password && (
           <p className="form-error" role="alert">
             {error}

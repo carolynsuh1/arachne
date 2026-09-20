@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { postForm } from "@/components/api";
+import { postForm, postJson } from "@/components/api";
 
 type Initial = {
+  linkedinUrl: string;
   fullName: string;
   university: string;
   workExperience: string;
@@ -18,6 +19,30 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 export default function ProfileForm({ initial }: { initial: Initial }) {
   const router = useRouter();
+  const [draft, setDraft] = useState(initial);
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
+  const importedOnce = useRef(false);
+  async function importLinkedin() {
+    if (!draft.linkedinUrl.trim() || importing) return;
+    setImporting(true); setImportStatus("Importing your LinkedIn background…");
+    const res = await postJson<{ fields: Partial<Initial> }>("/api/profile/linkedin", { linkedinUrl: draft.linkedinUrl });
+    if (res.ok) {
+      setDraft(prev => {
+        const next = { ...prev };
+        for (const key of ["fullName", "university", "workExperience", "education"] as const)
+          if (!prev[key].trim() && res.data.fields[key]) next[key] = res.data.fields[key]!;
+        return next;
+      });
+      setImportStatus("Imported. Review the details below before saving. Your existing entries were kept.");
+    } else setImportStatus(res.error + " You can retry or complete your profile manually.");
+    setImporting(false);
+  }
+  useEffect(() => {
+    if (!importedOnce.current && initial.linkedinUrl && !initial.fullName) {
+      importedOnce.current = true; void importLinkedin();
+    }
+  }, []);
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -60,7 +85,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
   const text = (name: keyof Initial, label: string, placeholder: string, rows = 4) => (
     <label className="field">
       <span>{label}</span>
-      <textarea name={name} rows={rows} maxLength={4000} defaultValue={initial[name] ?? ""} placeholder={placeholder} aria-invalid={!!fields[name]} />
+      <textarea name={name} rows={rows} maxLength={4000} value={draft[name] ?? ""} onChange={e => setDraft(p => ({...p,[name]:e.target.value}))} placeholder={placeholder} aria-invalid={!!fields[name]} />
       {fields[name] && <small className="field-error">{fields[name]}</small>}
     </label>
   );
@@ -72,15 +97,22 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
       <p className="auth-sub">Your profile is the first node on your map. Everything here stays private to your account.</p>
 
       <form onSubmit={onSubmit} noValidate className="form" encType="multipart/form-data">
+        <label className="field">
+          <span>Your LinkedIn (optional)</span>
+          <input name="linkedinUrl" type="url" value={draft.linkedinUrl} onChange={e => setDraft(p => ({...p,linkedinUrl:e.target.value}))} disabled={importing} maxLength={1500} placeholder="https://www.linkedin.com/in/your-name/" />
+          {fields.linkedinUrl && <small className="field-error">{fields.linkedinUrl}</small>}
+        </label>
+        <button type="button" className="btn btn-raised" disabled={busy || importing || !draft.linkedinUrl.trim()} onClick={() => void importLinkedin()}>{importing ? "Importing…" : "Import my LinkedIn"}</button>
+        {importStatus && <p role="status" className="field-hint">{importStatus}</p>}
         <div className="row">
           <label className="field">
             <span>Full name</span>
-            <input name="fullName" defaultValue={initial.fullName} required maxLength={100} autoComplete="name" aria-invalid={!!fields.fullName} />
+            <input name="fullName" value={draft.fullName} onChange={e => setDraft(p => ({...p,fullName:e.target.value}))} required maxLength={100} autoComplete="name" aria-invalid={!!fields.fullName} />
             {fields.fullName && <small className="field-error">{fields.fullName}</small>}
           </label>
           <label className="field">
             <span>University</span>
-            <input name="university" defaultValue={initial.university} maxLength={120} aria-invalid={!!fields.university} />
+            <input name="university" value={draft.university} onChange={e => setDraft(p => ({...p,university:e.target.value}))} maxLength={120} aria-invalid={!!fields.university} />
             {fields.university && <small className="field-error">{fields.university}</small>}
           </label>
         </div>
@@ -106,7 +138,7 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
             {error}
           </p>
         )}
-        <button className="btn btn-primary full" disabled={busy}>
+        <button className="btn btn-primary full" disabled={busy || importing}>
           {busy ? "Saving…" : "Save and continue"}
         </button>
       </form>

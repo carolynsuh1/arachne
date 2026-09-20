@@ -20,6 +20,7 @@ model Profile {
   id             String   @id @default(cuid())
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  linkedinUrl    String   @default("")
   fullName       String   @default("")
   university     String   @default("")
   resumePath     String?

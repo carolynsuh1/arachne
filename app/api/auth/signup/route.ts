@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { assertSameOrigin, jsonError, zodFields } from "@/lib/http";
 import { tooManyAttempts } from "@/lib/rateLimit";
 import { getSession } from "@/lib/session";
-import { credentialsSchema } from "@/lib/validation";
+import { signupSchema } from "@/lib/validation";
 
 export async function POST(req: Request) {
   const blocked = assertSameOrigin(req);
@@ -14,9 +14,9 @@ export async function POST(req: Request) {
   if (tooManyAttempts(`signup:${ip}`, 10)) return jsonError("Too many attempts. Try again later.", 429);
 
   const body = await req.json().catch(() => null);
-  const parsed = credentialsSchema.safeParse(body);
+  const parsed = signupSchema.safeParse(body);
   if (!parsed.success) return jsonError("Please fix the highlighted fields.", 400, zodFields(parsed.error));
-  const { email, password } = parsed.data;
+  const { email, password, linkedinUrl } = parsed.data;
 
   if (await prisma.user.findUnique({ where: { email } })) {
     return jsonError("An account with that email already exists. Try logging in.", 409, {
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const passwordHash = await bcrypt.hash(password, 12);
   let user;
   try {
-    user = await prisma.user.create({ data: { email, passwordHash, profile: { create: {} } } });
+    user = await prisma.user.create({ data: { email, passwordHash, profile: { create: { linkedinUrl } } } });
   } catch {
     // Lost a race with another signup for the same email (unique constraint).
     return jsonError("An account with that email already exists. Try logging in.", 409);
