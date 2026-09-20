@@ -2,6 +2,7 @@ import type {
   Goal,
   GoalNetworkResult,
   GraphResponse,
+  InteractionMemory,
   NetworkTracker,
   SyncResponse,
 } from "./types"
@@ -59,6 +60,22 @@ export function fetchGoalGraph(goalId: string) {
 
 export function fetchNetworkTracker() {
   return request<NetworkTracker>("/network/tracker")
+}
+
+export function listInteractions() {
+  return request<InteractionMemory[]>("/interactions")
+}
+
+export function createInteraction(input: {
+  person_id?: string
+  person_name: string
+  transcript: string
+  happened_at: string
+}) {
+  return request<InteractionMemory>("/interactions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
 }
 
 export function syncFromSample() {

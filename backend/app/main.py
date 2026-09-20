@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, SessionLocal, engine
-from .routers import agents, goals, graph, network, pipeline, research, sync, person_data, personal_profile
+from .routers import agents, goals, graph, interactions, network, pipeline, research, sync, person_data, personal_profile
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -31,6 +31,7 @@ app.include_router(research.router)
 app.include_router(network.router)
 app.include_router(person_data.router)
 app.include_router(personal_profile.router)
+app.include_router(interactions.router)
 
 
 @app.on_event("startup")

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { GoalPage } from "./pages/GoalPage"
 import { GraphPage } from "./pages/GraphPage"
 import { NetworkDashboardPage } from "./pages/NetworkDashboardPage"
+import { DebriefPage } from "./pages/DebriefPage"
 import type { GoalNetworkResult } from "./types"
 
 import { ResearchPage } from "./pages/ResearchPage"
@@ -10,7 +11,7 @@ import type { ResearchTarget } from "./pages/ResearchPage"
 import { ProfilesPage } from "./pages/ProfilesPage"
 import type { SavedProfile } from "./pages/ProfilesPage"
 
-type Page = "goal" | "dashboard" | "graph" | "research" | "profiles"
+type Page = "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
 
 export default function App() {
   const [profiles,setProfiles]=useState<SavedProfile[]>([])
@@ -49,6 +50,13 @@ export default function App() {
           >
             Knowledge graph
           </button>
+          <button
+            type="button"
+            onClick={() => setPage("debrief")}
+            className={`rounded-full px-4 py-1.5 ${page === "debrief" ? "bg-stone-900 text-white" : "text-stone-700"}`}
+          >
+            Debrief
+          </button>
           <button onClick={() => {setTarget(undefined);setPage("research")}} className={`rounded-full px-4 py-1.5 ${page === "research" ? "bg-stone-900 text-white" : "text-stone-700"}`}>Research</button>
           <button onClick={()=>setPage("profiles")} className={`rounded-full px-4 py-1.5 ${page === "profiles" ? "bg-stone-900 text-white" : "text-stone-700"}`}>Profiles{activeProfile?` · ${activeProfile.name}`:""}</button>
         </nav>
@@ -64,7 +72,20 @@ export default function App() {
         ) : page === "dashboard" ? (
           <NetworkDashboardPage onResearch={(person)=>{setTarget(person);setPage("research")}} />
         ) : page === "research" ? (
-          <ResearchPage key={target?.id ?? "search"} target={target} goal={plan?.goal.text} viewerId={activeProfile?.id} viewerName={activeProfile?.name} onOpenProfiles={()=>setPage("profiles")} />
+          <ResearchPage
+            key={target?.id ?? "search"}
+            target={target}
+            goal={plan?.goal.text}
+            viewerId={activeProfile?.id}
+            viewerName={activeProfile?.name}
+            onOpenProfiles={() => setPage("profiles")}
+            onDebrief={(person) => {
+              setTarget(person)
+              setPage("debrief")
+            }}
+          />
+        ) : page === "debrief" ? (
+          <DebriefPage key={target?.id ?? "open"} person={target} />
         ) : (
           <GraphPage onResearch={(person)=>{setTarget(person);setPage("research")}} />
         )}

@@ -120,3 +120,21 @@ class NetworkTrackerOut(BaseModel):
     clubs: list[TrackerGroupOut]
     organizations: list[TrackerGroupOut]
     locations: list[TrackerGroupOut]
+
+
+class InteractionMemoryCreate(BaseModel):
+    person_id: str | None = Field(default=None, max_length=200)
+    person_name: str = Field(min_length=1, max_length=120)
+    transcript: str = Field(min_length=1, max_length=10_000)
+    happened_at: datetime
+
+
+class InteractionMemoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    person_id: str | None
+    person_name: str
+    transcript: str
+    happened_at: datetime
+    created_at: datetime

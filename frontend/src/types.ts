@@ -108,3 +108,12 @@ export type NetworkTracker = {
   organizations: TrackerGroup[]
   locations: TrackerGroup[]
 }
+
+export type InteractionMemory = {
+  id: string
+  person_id: string | null
+  person_name: string
+  transcript: string
+  happened_at: string
+  created_at: string
+}

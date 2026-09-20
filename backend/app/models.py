@@ -93,3 +93,14 @@ class PersonalProfile(Base):
     __tablename__ = "personal_profiles"
     id: Mapped[str] = mapped_column(String, primary_key=True)
     data_json: Mapped[str] = mapped_column(Text)
+
+
+class InteractionMemory(Base):
+    __tablename__ = "interaction_memories"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    person_name: Mapped[str] = mapped_column(String, nullable=False)
+    transcript: Mapped[str] = mapped_column(Text, nullable=False)
+    happened_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
