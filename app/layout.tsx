@@ -7,7 +7,7 @@ const sans = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 export const metadata: Metadata = {
   title: "Arachne",
-  description: "A quiet map for your raw human connections.",
+  description: "An iterative web designed to keep you up to date with your network.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

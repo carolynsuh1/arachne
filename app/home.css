@@ -67,24 +67,6 @@
   width: 100%;
 }
 
-.hero-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(217, 119, 6, 0.2);
-  border: 1px solid var(--amber);
-  border-radius: 20px;
-}
-
-.hero-badge span {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--amber);
-  white-space: nowrap;
-}
-
 .hero h1 {
   width: 100%;
   max-width: 1061px;

@@ -90,12 +90,9 @@ export default function Home() {
       {/* Hero */}
       <section className="hero">
         <div className="hero-content">
-          <div className="hero-badge">
-            <img src={`${F}/shield-alert.svg`} alt="" width={12} height={12} />
-            <span>Human-Centered Mapping</span>
-          </div>
           <h1>
-            A quiet map for your raw <span className="accent">human connections</span>
+            An <span className="accent">iterative web</span> designed to keep you up to date with your{" "}
+            <span className="accent">network</span>.
           </h1>
           <p className="hero-sub">
             Arachne reads publicly available web directories and rebuilds your professional network as a map. You get
