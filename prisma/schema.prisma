@@ -40,7 +40,11 @@ model Person {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name       String
   university String
+  // Id of the matching person in the team backend (the source of truth for the network).
+  // Null when the backend was unreachable at the time; the person is then saved locally only.
+  backendPersonId String?
   createdAt  DateTime @default(now())
 
+  @@unique([userId, backendPersonId])
   @@index([userId])
 }

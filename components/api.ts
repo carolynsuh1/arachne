@@ -1,12 +1,20 @@
 export type ApiResult<T = { redirect?: string }> =
   | { ok: true; data: T }
-  | { ok: false; error: string; fields: Record<string, string> };
+  | { ok: false; status: number; error: string; fields: Record<string, string>; body: Record<string, unknown> };
 
 async function parse<T>(res: Response): Promise<ApiResult<T>> {
   const body = await res.json().catch(() => ({}));
   if (res.ok) return { ok: true, data: body as T };
-  return { ok: false, error: body.error ?? "Something went wrong. Please try again.", fields: body.fields ?? {} };
+  return {
+    ok: false,
+    status: res.status,
+    error: body.error ?? "Something went wrong. Please try again.",
+    fields: body.fields ?? {},
+    body,
+  };
 }
+
+const networkError = { ok: false, status: 0, error: "Network error. Please try again.", fields: {}, body: {} } as const;
 
 export async function postJson<T = { redirect?: string }>(url: string, payload: unknown): Promise<ApiResult<T>> {
   try {
@@ -17,7 +25,7 @@ export async function postJson<T = { redirect?: string }>(url: string, payload: 
     });
     return await parse<T>(res);
   } catch {
-    return { ok: false, error: "Network error. Please try again.", fields: {} };
+    return networkError;
   }
 }
 
@@ -25,6 +33,6 @@ export async function postForm<T = { redirect?: string }>(url: string, form: For
   try {
     return await parse<T>(await fetch(url, { method: "POST", body: form }));
   } catch {
-    return { ok: false, error: "Network error. Please try again.", fields: {} };
+    return networkError;
   }
 }
