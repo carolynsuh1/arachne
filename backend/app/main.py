@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, SessionLocal, engine
-from .routers import agents, brain_dumps, copilot, goals, graph, interactions, meetings, network, pipeline, research, sync, transcription, person_data, personal_profile, voice
+from .routers import followups, agents, brain_dumps, copilot, goals, graph, interactions, meetings, network, pipeline, research, sync, transcription, person_data, personal_profile, voice
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -22,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(followups.router)
 app.include_router(goals.router)
 app.include_router(graph.router)
 app.include_router(sync.router)
