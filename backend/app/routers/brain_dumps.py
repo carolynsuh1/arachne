@@ -65,7 +65,7 @@ def confirm_brain_dump(payload: BrainDumpConfirmIn, db: Session = Depends(get_db
             category=card.category, text=card.text.strip(),
         ))
 
-    info = [card.text for card in selected if card.category in {"new_information", "personal_details", "advice", "opportunities"}]
+    info = list(dict.fromkeys(card.text for card in selected if card.category in {"new_information", "personal_details", "advice", "opportunities"}))
     topics = [card.text for card in selected if card.category == "topics"]
     if info:
         addition = "Recent coffee chat: " + " ".join(info)
@@ -248,9 +248,14 @@ def _extract_intros(person: Person, text: str, db: Session) -> list[SuggestedInt
 
 def _create_reminders(db: Session, person_id: str, interaction_id: str, cards: list[BrainDumpCard], happened_at: datetime) -> list[Reminder]:
     rows: list[Reminder] = []
+    seen: set[str] = set()
     for card in cards:
         if card.category not in {"commitments", "follow_ups", "next_conversation"}:
             continue
+        key = card.text.casefold().strip()
+        if key in seen:
+            continue
+        seen.add(key)
         due = happened_at + timedelta(days=7 if "next week" in card.text.casefold() else 14 if "2 weeks" in card.text.casefold() else 3)
         row = Reminder(id=str(uuid4()), person_id=person_id, interaction_id=interaction_id, action=card.text, due_at=due, status="upcoming", notes="Created from coffee chat brain dump.")
         db.add(row)
