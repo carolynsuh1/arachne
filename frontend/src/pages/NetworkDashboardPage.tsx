@@ -10,6 +10,7 @@ import type {
   TrackerPerson,
   Reminder,
 } from "../types"
+import { PersonTimeline } from "../components/PersonTimeline"
 
 type SortKey = "name" | "company" | "location"
 type SortDirection = "asc" | "desc"
@@ -23,9 +24,10 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 type Props = {
   onResearch: (person: { id: string; name: string }) => void
   onBrainDump: (person: { id: string; name: string }) => void
+  onMeeting: (person: { id: string; name: string }) => void
 }
 
-export function NetworkDashboardPage({ onResearch, onBrainDump }: Props) {
+export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Props) {
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoalId, setSelectedGoalId] = useState("")
   const [graph, setGraph] = useState<GraphResponse | null>(null)
@@ -176,7 +178,7 @@ export function NetworkDashboardPage({ onResearch, onBrainDump }: Props) {
                   edges={graph.edges}
                   onSelect={setSelected}
                 />
-                <PersonDetail selected={selected} onResearch={onResearch} onBrainDump={onBrainDump} />
+                <PersonDetail selected={selected} onResearch={onResearch} onBrainDump={onBrainDump} onMeeting={onMeeting} />
               </div>
             </>
           ) : (
@@ -227,10 +229,12 @@ function PersonDetail({
   selected,
   onResearch,
   onBrainDump,
+  onMeeting,
 }: {
   selected: (GraphNodeData & { id: string }) | null
   onResearch: Props["onResearch"]
   onBrainDump: Props["onBrainDump"]
+  onMeeting: Props["onMeeting"]
 }) {
   return (
     <aside className="rounded-xl border border-stone-300 bg-white p-4">
@@ -261,6 +265,8 @@ function PersonDetail({
             Prepare coffee chat
           </button>
           <button type="button" onClick={() => onBrainDump({id: selected.id.replace(/^person:/, ""), name: selected.name})} className="mt-2 rounded-full border border-stone-900 px-4 py-2 font-sans text-sm">Brain Dump</button>
+          <button type="button" onClick={() => onMeeting({id: selected.id.replace(/^person:/, ""), name: selected.name})} className="mt-2 rounded-full bg-red-800 px-4 py-2 font-sans text-sm text-white">Start Meeting</button>
+          <PersonTimeline personId={selected.id.replace(/^person:/, "")} />
         </>
       ) : (
         <p className="text-stone-600">Select a person to see why they match.</p>

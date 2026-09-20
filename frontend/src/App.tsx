@@ -6,6 +6,7 @@ import { DebriefPage } from "./pages/DebriefPage"
 import { CopilotPage } from "./pages/CopilotPage"
 import { PracticePage } from "./pages/PracticePage"
 import { BrainDumpPage } from "./pages/BrainDumpPage"
+import { MeetingsPage } from "./pages/MeetingsPage"
 import type { GoalNetworkResult } from "./types"
 
 import { ResearchPage } from "./pages/ResearchPage"
@@ -14,7 +15,7 @@ import type { ResearchTarget } from "./pages/ResearchPage"
 import { ProfilesPage } from "./pages/ProfilesPage"
 import type { SavedProfile } from "./pages/ProfilesPage"
 
-type Page = "copilot" | "practice" | "brain-dump" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
+type Page = "copilot" | "practice" | "brain-dump" | "meetings" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
 
 export default function App() {
   const [profiles,setProfiles]=useState<SavedProfile[]>([])
@@ -28,6 +29,7 @@ export default function App() {
   const [plan, setPlan] = useState<GoalNetworkResult | null>(null)
   const [practicePerson, setPracticePerson] = useState<{ id: string; name: string } | null>(null)
   const [brainDumpPerson, setBrainDumpPerson] = useState<{ id: string; name: string } | null>(null)
+  const [meetingPerson, setMeetingPerson] = useState<{ id: string; name: string } | null>(null)
 
   function openPractice(person: { id: string; name: string }) {
     setPracticePerson(person)
@@ -39,11 +41,23 @@ export default function App() {
     setPage("brain-dump")
   }
 
+  function openMeeting(person?: { id: string; name: string }) {
+    setMeetingPerson(person ?? null)
+    setPage("meetings")
+  }
+
   return (
     <div className="min-h-svh">
       <header className="flex flex-wrap items-center gap-4 border-b border-stone-300 px-6 py-4">
         <p className="text-xl">YourWeb</p>
         <nav className="flex gap-2 font-sans text-sm">
+          <button
+            type="button"
+            onClick={() => openMeeting()}
+            className={`rounded-full px-4 py-1.5 ${page === "meetings" ? "bg-stone-900 text-white" : "text-stone-700"}`}
+          >
+            Meetings · New Meeting
+          </button>
           <button
             type="button"
             onClick={() => setPage("copilot")}
@@ -90,7 +104,9 @@ export default function App() {
         ) : page === "practice" && practicePerson ? (
           <PracticePage person={practicePerson} onBack={() => setPage("copilot")} />
         ) : page === "brain-dump" && brainDumpPerson ? (
-          <BrainDumpPage person={brainDumpPerson} onDone={() => setPage("graph")} />
+          <BrainDumpPage person={brainDumpPerson} onDone={() => setPage("graph")} onMeeting={openMeeting} />
+        ) : page === "meetings" ? (
+          <MeetingsPage initialPerson={meetingPerson} onClearPerson={() => setMeetingPerson(null)} />
         ) : page === "profiles" ? (
           <ProfilesPage profiles={profiles} activeId={activeId} onSelect={selectProfile} onSaved={p=>{setProfiles(items=>[...items.filter(x=>x.id!==p.id),p]);selectProfile(p.id)}} onResearch={()=>setPage("research")}/>
         ) : page === "goal" ? (
@@ -100,7 +116,7 @@ export default function App() {
             onOpenGraph={() => setPage("graph")}
           />
         ) : page === "dashboard" ? (
-          <NetworkDashboardPage onResearch={(person)=>{setTarget(person);setPage("research")}} onBrainDump={openBrainDump} />
+          <NetworkDashboardPage onResearch={(person)=>{setTarget(person);setPage("research")}} onBrainDump={openBrainDump} onMeeting={openMeeting} />
         ) : page === "research" ? (
           <ResearchPage
             key={target?.id ?? "search"}
@@ -114,6 +130,7 @@ export default function App() {
               setPage("debrief")
             }}
             onBrainDump={openBrainDump}
+            onMeeting={openMeeting}
           />
         ) : page === "debrief" ? (
           <DebriefPage key={target?.id ?? "open"} person={target} />
@@ -122,6 +139,7 @@ export default function App() {
             onResearch={(person)=>{setTarget(person);setPage("research")}}
             onPractice={openPractice}
             onBrainDump={openBrainDump}
+            onMeeting={openMeeting}
           />
         )}
       </main>

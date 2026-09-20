@@ -10,7 +10,7 @@ const labels: Record<string, string> = {
   follow_ups: "Follow-up actions", next_conversation: "Next conversation", dates: "Dates & deadlines",
 }
 
-export function BrainDumpPage({ person, onDone }: { person: {id: string; name: string}; onDone: () => void }) {
+export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: string; name: string}; onDone: () => void; onMeeting?: (person: {id: string; name: string}) => void }) {
   const voice = useVoiceCapture()
   const [cards, setCards] = useState<BrainDumpCard[]>([])
   const [introductions, setIntroductions] = useState<SuggestedIntroduction[]>([])
@@ -65,6 +65,7 @@ export function BrainDumpPage({ person, onDone }: { person: {id: string; name: s
 
   return <div className="mx-auto max-w-4xl space-y-6">
     <button onClick={onDone} className="font-sans text-sm underline">← Back to {person.name}</button>
+    {onMeeting ? <button onClick={() => onMeeting(person)} className="ml-4 rounded-full bg-red-800 px-4 py-2 text-sm text-white">Start Meeting</button> : null}
     <header>
       <p className="font-sans text-sm uppercase tracking-wide text-stone-500">Post-coffee-chat brain dump</p>
       <h1 className="mt-2 text-4xl">What did you learn from {person.name}?</h1>

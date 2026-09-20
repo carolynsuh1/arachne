@@ -12,6 +12,8 @@ import type {
   CopilotTurn,
   PracticeFeedback,
   PracticeTurn,
+  Meeting,
+  MeetingCitation,
   SyncResponse,
 } from "./types"
 
@@ -145,6 +147,51 @@ export function practiceFeedback(
 
 export function syncFromSample() {
   return request<SyncResponse>("/sync/sample", { method: "POST" })
+}
+
+export function startMeeting(input: {
+  person_ids: string[]
+  goal_id?: string
+  goal_text?: string
+  meeting_type: string
+  title?: string
+}) {
+  return request<Meeting>("/meetings", { method: "POST", body: JSON.stringify(input) })
+}
+
+export function ingestMeetingTranscript(meetingId: string, text: string) {
+  return request<{meeting: Meeting; extraction: {cards: BrainDumpCard[]; introductions: SuggestedIntroduction[]; spoken_summary: string; provider: string}}>(`/meetings/${meetingId}/chunks`, {
+    method: "POST", body: JSON.stringify({ text }),
+  })
+}
+
+export function setMeetingPaused(meetingId: string, paused: boolean) {
+  return request<Meeting>(`/meetings/${meetingId}/${paused ? "pause" : "resume"}`, { method: "POST" })
+}
+
+export function endMeeting(meetingId: string) {
+  return request<{meeting: Meeting; extraction: {cards: BrainDumpCard[]; introductions: SuggestedIntroduction[]; spoken_summary: string; provider: string}}>(`/meetings/${meetingId}/end`, { method: "POST" })
+}
+
+export function confirmMeeting(meetingId: string, cards: BrainDumpCard[], introductions: SuggestedIntroduction[]) {
+  return request<{meeting: Meeting; reminders: Reminder[]; created_people: string[]}>(`/meetings/${meetingId}/confirm`, {
+    method: "POST", body: JSON.stringify({ cards, introductions }),
+  })
+}
+
+export function listMeetings(filters: Record<string, string> = {}) {
+  const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value))
+  return request<Meeting[]>(`/meetings${query.size ? `?${query}` : ""}`)
+}
+
+export function askMeetings(question: string) {
+  return request<{answer: string; citations: MeetingCitation[]}>("/meetings/ask/query", {
+    method: "POST", body: JSON.stringify({ question }),
+  })
+}
+
+export function fetchPersonTimeline(personId: string) {
+  return request<{id: string; kind: string; title: string; detail: string; at: string}[]>(`/meetings/people/${encodeURIComponent(personId)}/timeline`)
 }
 
 export type ResearchInput = { name: string; affiliation: string; goal: string; viewer_profile_id?: string; profileUrl?: string; person_id?: string }

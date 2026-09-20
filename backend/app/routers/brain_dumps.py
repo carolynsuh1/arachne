@@ -31,6 +31,7 @@ router = APIRouter(prefix="/brain-dumps", tags=["brain dumps"])
 CATEGORIES = {
     "new_information", "topics", "personal_details", "advice", "opportunities",
     "recommended_people", "commitments", "follow_ups", "next_conversation", "dates",
+    "current_projects", "career_info", "organizations", "resources", "promises_they_made",
 }
 
 
@@ -207,12 +208,22 @@ def _heuristic_extract(person: Person, transcript: str, db: Session) -> BrainDum
         lower = sentence.casefold()
         if any(word in lower for word in ("working on", "used to", "intern", "told me")):
             cards.append(BrainDumpCard(category="new_information", text=sentence))
+        if any(word in lower for word in ("working on", "building", "project")):
+            cards.append(BrainDumpCard(category="current_projects", text=sentence))
+        if any(word in lower for word in ("intern", "job", "career", "role at", "works at", "works on")):
+            cards.append(BrainDumpCard(category="career_info", text=sentence))
         if any(word in lower for word in ("talked about", "interested in", "working on")):
             cards.append(BrainDumpCard(category="topics", text=sentence))
         if "should" in lower and ("talk" in lower or "meet" in lower):
             cards.append(BrainDumpCard(category="advice", text=sentence))
         if any(word in lower for word in ("friend", "connection", "opportunity", "resource")):
             cards.append(BrainDumpCard(category="opportunities", text=sentence))
+        if any(word in lower for word in ("resource", "article", "book", "link", "paper")):
+            cards.append(BrainDumpCard(category="resources", text=sentence))
+        if any(word in lower for word in ("company", "startup", "university", "club", " at anthropic", " at nvidia")):
+            cards.append(BrainDumpCard(category="organizations", text=sentence))
+        if any(word in lower for word in ("she promised", "he promised", "they promised", "she will", "he will", "they will")):
+            cards.append(BrainDumpCard(category="promises_they_made", text=sentence))
         if any(word in lower for word in ("send her", "send him", "i promised", "remind me", "told her i", "told him i")):
             cards.append(BrainDumpCard(category="commitments", text=sentence))
             cards.append(BrainDumpCard(category="follow_ups", text=sentence))
@@ -238,9 +249,16 @@ def _extract_intros(person: Person, text: str, db: Session) -> list[SuggestedInt
             if name.casefold() == person.name.split()[0].casefold() or any(x.name.casefold() == name.casefold() for x in found):
                 continue
             existing = _find_person(db, name)
+            affiliation = (match.group(2) or "").strip()
+            if not affiliation:
+                nearby = re.search(
+                    rf"\b{re.escape(name)}\b[^.]*\.\s*(?:He|She|They)\s+works?\s+[^.]*?\bat\s+([A-Z][\w&.-]+)",
+                    text,
+                )
+                affiliation = nearby.group(1).strip(" .,!?:;") if nearby else ""
             found.append(SuggestedIntroduction(
-                name=name, affiliation=(match.group(2) or "").strip(),
-                context=f"{person.name} recommended introduction to {name}.",
+                name=name, affiliation=affiliation,
+                context=f"{person.name} recommended introduction to {name}{f' at {affiliation}' if affiliation else ''}.",
                 existing_person_id=existing.id if existing else None,
             ))
     return found
@@ -295,7 +313,8 @@ def _summary(person_name: str, cards: list[BrainDumpCard], intros: list[Suggeste
 def _openai_extract(person: Person, transcript: str, db: Session) -> BrainDumpExtraction:
     instructions = """Extract a coffee chat transcript as strict JSON with keys cards, introductions, spoken_summary.
 cards is an array of {category,text,selected}; categories: new_information, topics, personal_details, advice,
-opportunities, recommended_people, commitments, follow_ups, next_conversation, dates.
+opportunities, recommended_people, commitments, promises_they_made, follow_ups, next_conversation,
+dates, current_projects, career_info, organizations, resources.
 introductions is an array of {name,affiliation,context}. Never invent people."""
     raw = parse_json_object(call_terra(instructions, transcript))
     cards = [BrainDumpCard(**card) for card in raw.get("cards", []) if card.get("category") in CATEGORIES]
