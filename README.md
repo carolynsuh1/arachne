@@ -36,6 +36,28 @@ Entity extraction, Elastic, and goal-specific graph views live in `backend/app/p
 
 There is no login and no deployment yet.
 
+### Voice input and phone demo
+
+Voice input requests microphone permission explicitly, uses browser live
+captions when available, and falls back to recorded audio sent to
+`POST /transcription`. Configure `ELEVENLABS_API_KEY` (preferred, Scribe) or
+`OPENAI_API_KEY` (Whisper) in `backend/.env`; restart the backend after editing
+the file.
+
+Browsers only expose the microphone on HTTPS origins or `localhost`. A phone
+opened at a plain LAN URL such as `http://192.168.x.x:5173` cannot record. For a
+demo, keep the backend running, then expose Vite through one HTTPS tunnel:
+
+```bash
+cd frontend
+npm run dev:phone
+# In another terminal (or use your preferred HTTPS tunnel):
+npx localtunnel --port 5173
+```
+
+Open the resulting `https://…` URL on the phone and allow microphone access.
+The Vite `/api` proxy keeps backend calls on the same secure origin.
+
 ## Folder map
 
 - `frontend/` — React + Vite + Tailwind + React Flow. This is the page you open.
