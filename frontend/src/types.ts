@@ -190,3 +190,30 @@ export type PracticeFeedback = {
   suggested_follow_up: string
   next_action: string
 }
+
+export type Meeting = {
+  id: string
+  title: string
+  meeting_type: string
+  person_ids: string[]
+  person_names: string[]
+  goal_id: string | null
+  goal_text: string
+  status: "live" | "paused" | "review" | "confirmed"
+  transcript: string
+  summary: string
+  cards: BrainDumpCard[]
+  introductions: SuggestedIntroduction[]
+  tags: string[]
+  started_at: string
+  ended_at: string | null
+  confirmed_at: string | null
+}
+
+export type MeetingCitation = {
+  meeting_id: string
+  title: string
+  person_names: string[]
+  date: string
+  excerpt: string
+}

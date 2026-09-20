@@ -217,3 +217,67 @@ class BrainDumpActionOut(BaseModel):
     message: str
     reminder: ReminderOut | None = None
     recommendations: list[WhoNextOut] = []
+
+
+class MeetingStartIn(BaseModel):
+    person_ids: list[str] = Field(default_factory=list, max_length=20)
+    goal_id: str | None = None
+    goal_text: str = Field(default="", max_length=700)
+    meeting_type: str = "coffee_chat"
+    title: str = Field(default="", max_length=200)
+
+
+class MeetingOut(BaseModel):
+    id: str
+    title: str
+    meeting_type: str
+    person_ids: list[str]
+    person_names: list[str]
+    goal_id: str | None
+    goal_text: str
+    status: str
+    transcript: str
+    summary: str
+    cards: list[BrainDumpCard]
+    introductions: list[SuggestedIntroduction]
+    tags: list[str]
+    started_at: datetime
+    ended_at: datetime | None
+    confirmed_at: datetime | None
+
+
+class MeetingChunkIn(BaseModel):
+    text: str = Field(min_length=1, max_length=50_000)
+
+
+class MeetingLiveOut(BaseModel):
+    meeting: MeetingOut
+    extraction: BrainDumpExtraction
+
+
+class MeetingConfirmIn(BaseModel):
+    cards: list[BrainDumpCard]
+    introductions: list[SuggestedIntroduction] = []
+
+
+class MeetingConfirmOut(BaseModel):
+    meeting: MeetingOut
+    reminders: list[ReminderOut]
+    created_people: list[str]
+
+
+class AskMeetingsIn(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+
+
+class MeetingCitation(BaseModel):
+    meeting_id: str
+    title: str
+    person_names: list[str]
+    date: datetime
+    excerpt: str
+
+
+class AskMeetingsOut(BaseModel):
+    answer: str
+    citations: list[MeetingCitation]

@@ -128,3 +128,24 @@ class Reminder(Base):
     status: Mapped[str] = mapped_column(String, default="upcoming")
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Meeting(Base):
+    __tablename__ = "meetings"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    meeting_type: Mapped[str] = mapped_column(String, default="coffee_chat", index=True)
+    person_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    person_names_json: Mapped[str] = mapped_column(Text, default="[]")
+    goal_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    goal_text: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String, default="live", index=True)
+    transcript: Mapped[str] = mapped_column(Text, default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+    cards_json: Mapped[str] = mapped_column(Text, default="[]")
+    introductions_json: Mapped[str] = mapped_column(Text, default="[]")
+    tags_json: Mapped[str] = mapped_column(Text, default="[]")
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
