@@ -7,6 +7,12 @@
   background: var(--bg);
 }
 
+/* Line the header up with the map content below it (the shared header uses the wider homepage gutter). */
+.map-page .app-header {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
 .map-main {
   display: flex;
   flex: 1;
@@ -1013,6 +1019,11 @@ details summary {
 }
 
 @media (max-width: 720px) {
+  .map-page .app-header {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
   .map-main {
     padding: 16px;
   }
