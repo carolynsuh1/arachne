@@ -33,7 +33,7 @@ export function DebriefPage({ person }: Props) {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  const voice = useVoiceCapture()
+  const voice = useVoiceCapture("", { mode: "follow_up" })
 
   useEffect(() => {
     Promise.all([fetchNetworkTracker(), listInteractions()])

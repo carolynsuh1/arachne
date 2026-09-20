@@ -1,7 +1,6 @@
-"""Graph-grounded copilot, ElevenLabs speech, and coffee-chat rehearsal."""
-import base64, json, os, re
+"""Graph-grounded copilot and coffee-chat rehearsal."""
+import json, re
 from collections import defaultdict
-import httpx
 from sqlalchemy.orm import Session
 from ..models import InteractionMemory, Organization, Person, PersonProfile, Relationship, ResearchBrief
 from ..pipeline.goal_view import _tokens
@@ -69,15 +68,12 @@ def person_context(db: Session, person: Person) -> dict:
     return {"id":person.id,"name":person.name,"kind":"person","bio":person.bio,"interests":interests,"skills":skills,"location":profile.location if profile else "","affiliations":[o.name for o in _affiliations(rels,orgs)[person.id]],"memories":[m.transcript for m in memories],"research":json.loads(brief.result_json) if brief else None,"focus":(interests+skills+[person.bio])[0] or "their work"}
 
 def _voice(payload: dict) -> dict:
-    key = os.getenv("ELEVENLABS_API_KEY","").strip()
-    if not key: return {**payload,"audio_base64":None,"audio_mime_type":None,"voice_status":"ELEVENLABS_API_KEY is not set; text and graph highlights remain available."}
-    voice = os.getenv("ELEVENLABS_VOICE_ID","21m00Tcm4TlvDq8ikWAM").strip()
-    try:
-        response = httpx.post(f"https://api.elevenlabs.io/v1/text-to-speech/{voice}",params={"output_format":"mp3_44100_128"},headers={"xi-api-key":key,"Content-Type":"application/json"},json={"text":payload["spoken_text"],"model_id":"eleven_multilingual_v2"},timeout=45)
-        response.raise_for_status()
-        return {**payload,"audio_base64":base64.b64encode(response.content).decode(),"audio_mime_type":"audio/mpeg","voice_status":"ElevenLabs voice ready."}
-    except httpx.HTTPError:
-        return {**payload,"audio_base64":None,"audio_mime_type":None,"voice_status":"ElevenLabs audio failed; text and highlights remain available."}
+    return {
+        **payload,
+        "audio_base64": None,
+        "audio_mime_type": None,
+        "voice_status": "Use the continuous Deepgram session for spoken conversation.",
+    }
 
 def _affiliations(rels, orgs):
     result = defaultdict(list)

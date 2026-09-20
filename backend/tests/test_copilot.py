@@ -1,7 +1,6 @@
 import json
 import unittest
 from datetime import datetime
-from unittest.mock import patch
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -60,7 +59,6 @@ class CopilotTests(unittest.TestCase):
     def tearDown(self):
         self.engine.dispose()
 
-    @patch.dict("os.environ", {"ELEVENLABS_API_KEY": ""}, clear=False)
     def test_plan_uses_real_graph_ids_and_memory(self):
         with self.Session() as db:
             result = build_copilot_turn(

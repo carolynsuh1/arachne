@@ -16,7 +16,7 @@ class TranscriptionTests(unittest.TestCase):
 
     @patch(
         "app.routers.transcription.transcribe_audio",
-        return_value=("Met Maya and promised an introduction.", "elevenlabs"),
+        return_value=("Met Maya and promised an introduction.", "deepgram"),
     )
     def test_audio_in_returns_transcribed_text(self, transcribe):
         response = self.client.post(
@@ -29,7 +29,7 @@ class TranscriptionTests(unittest.TestCase):
             response.json(),
             {
                 "text": "Met Maya and promised an introduction.",
-                "provider": "elevenlabs",
+                "provider": "deepgram",
             },
         )
         transcribe.assert_called_once_with(
@@ -40,7 +40,7 @@ class TranscriptionTests(unittest.TestCase):
 
     @patch.dict(
         os.environ,
-        {"ELEVENLABS_API_KEY": "", "OPENAI_API_KEY": ""},
+        {"DEEPGRAM_API_KEY": "", "OPENAI_API_KEY": ""},
         clear=False,
     )
     def test_missing_provider_key_returns_actionable_error(self):
@@ -50,7 +50,7 @@ class TranscriptionTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 503)
-        self.assertIn("ELEVENLABS_API_KEY or OPENAI_API_KEY", response.json()["detail"])
+        self.assertIn("DEEPGRAM_API_KEY or OPENAI_API_KEY", response.json()["detail"])
 
 
 if __name__ == "__main__":

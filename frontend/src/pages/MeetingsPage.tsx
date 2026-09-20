@@ -19,7 +19,7 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
   initialPerson?: {id: string; name: string} | null
   onClearPerson?: () => void
 }) {
-  const voice = useVoiceCapture()
+  const voice = useVoiceCapture("", { mode: "meeting" })
   const [people, setPeople] = useState<TrackerPerson[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -77,7 +77,7 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
       })
       setActive(meeting); setNow(new Date(meeting.started_at).getTime()); setCards([]); setIntroductions([]); setReminders([])
       onClearPerson?.()
-      await voice.start()
+      await voice.start({ meetingId: meeting.id, mode: "meeting" })
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not start meeting.") }
     finally { setBusy(false) }
   }
@@ -91,7 +91,7 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
       if (voice.transcript.trim()) await ingestMeetingTranscript(active.id, voice.transcript)
       const meeting = await setMeetingPaused(active.id, pausing)
       setActive(meeting)
-      if (!pausing) await voice.start()
+      if (!pausing) await voice.start({ meetingId: active.id, mode: "meeting" })
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not update meeting.") }
     finally { setBusy(false) }
   }
@@ -124,6 +124,7 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
     try {
       const result = await askMeetings(ask)
       setAnswer(result.answer); setCitations(result.citations)
+      voice.speakText(result.answer)
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not search meeting memory.") }
     finally { setBusy(false) }
   }
@@ -134,6 +135,7 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
     try {
       const result = await sendBrainDumpAction({ person_id: active.person_ids[0], text: action })
       setAnswer(result.message); if (result.reminder) setReminders((items) => [...items, result.reminder!])
+      voice.speakText(result.message)
       setAction("")
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not create follow-up.") }
     finally { setBusy(false) }

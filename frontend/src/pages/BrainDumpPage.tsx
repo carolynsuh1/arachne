@@ -11,7 +11,7 @@ const labels: Record<string, string> = {
 }
 
 export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: string; name: string}; onDone: () => void; onMeeting?: (person: {id: string; name: string}) => void }) {
-  const voice = useVoiceCapture()
+  const voice = useVoiceCapture("", { mode: "brain_dump" })
   const [cards, setCards] = useState<BrainDumpCard[]>([])
   const [introductions, setIntroductions] = useState<SuggestedIntroduction[]>([])
   const [summary, setSummary] = useState("")
@@ -42,7 +42,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       setSummary(result.spoken_summary); setReminders(result.reminders)
       setInteractionId(result.interaction.id)
       setMessage("Memory saved. Profile, graph, and upcoming actions are updated.")
-      if ("speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(result.spoken_summary))
+      voice.speakText(result.spoken_summary)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not save this brain dump.")
     } finally { setBusy(false) }
@@ -56,7 +56,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       setMessage(result.message)
       if (result.reminder) setReminders((items) => [...items, result.reminder!])
       if (result.recommendations.length) setRecommendations(result.recommendations)
-      if ("speechSynthesis" in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(result.message))
+      voice.speakText(result.message)
       setAction("")
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not complete that action.")
@@ -75,7 +75,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       <button type="button" disabled={voice.isTranscribing} onClick={() => void voice.toggle()} className={`mx-auto flex size-24 items-center justify-center rounded-full text-white disabled:opacity-50 ${voice.isRecording ? "animate-pulse bg-red-700" : "bg-stone-900"}`}>
         {voice.isTranscribing ? "Working…" : voice.isRecording ? "Stop" : "Talk"}
       </button>
-      <p className="mt-3 text-center font-sans text-sm text-stone-500">{voice.isRecording ? `Recording ${Math.floor(voice.elapsedSeconds / 60)}:${String(voice.elapsedSeconds % 60).padStart(2, "0")}` : voice.status}</p>
+      <p className="mt-3 text-center font-sans text-sm text-stone-500">{voice.status}{voice.isRecording ? ` · ${Math.floor(voice.elapsedSeconds / 60)}:${String(voice.elapsedSeconds % 60).padStart(2, "0")}` : ""}</p>
       <textarea aria-label="Brain dump transcript" rows={7} value={voice.transcript} onChange={(event) => voice.setTranscript(event.target.value)} placeholder={`I just talked to ${person.name}…`} className="mt-6 w-full rounded-xl border border-stone-300 bg-stone-50 p-4 text-base" />
       {voice.interim ? <p className="mt-2 text-sm italic text-stone-500">{voice.interim}</p> : null}
       {voice.error ? <p role="alert" className="mt-3 text-sm text-red-800">{voice.error}</p> : null}
@@ -96,7 +96,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       <button disabled={busy} onClick={() => void confirm()} className="w-full rounded-full bg-stone-900 px-5 py-3 text-white">{busy ? "Saving…" : "Confirm and update my network"}</button>
     </section> : null}
     {reminders.length ? <section className="rounded-2xl bg-stone-900 p-6 text-white"><h2 className="text-3xl">Next Steps · {person.name}</h2>{reminders.map((reminder) => <p key={reminder.id} className="mt-3">✓ {reminder.action} <span className="text-stone-300">→ {reminder.due_at ? new Date(reminder.due_at).toLocaleDateString() : "No date"}</span></p>)}</section> : null}
-    {summary ? <section className="rounded-xl border border-stone-300 p-5"><h2 className="text-xl">Agent follow-up</h2><p className="mt-2">{summary}</p><p className="mt-2 text-xs text-stone-500">Spoken with browser audio. ElevenLabs remains available through Network Copilot when configured.</p>
+    {summary ? <section className="rounded-xl border border-stone-300 p-5"><h2 className="text-xl">Agent follow-up</h2><p className="mt-2">{summary}</p><p className="mt-2 text-xs text-stone-500">Spoken through the active Deepgram Voice Agent session.</p>
       {interactionId ? <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input aria-label="Action for agent" value={action} onChange={(event) => setAction(event.target.value)} onKeyDown={(event) => {if (event.key === "Enter") void runAction()}} placeholder='“Yes, remind me Tuesday”' className="min-w-0 flex-1 rounded-full border border-stone-300 px-4 py-2"/><button disabled={busy || !action.trim()} onClick={() => void runAction()} className="rounded-full bg-stone-900 px-5 py-2 text-white disabled:opacity-40">Do it</button></div> : null}
     </section> : null}
     {reminders.length ? <section><button onClick={() => void fetchWhoNext().then(setRecommendations).catch((reason: Error) => setError(reason.message))} className="rounded-full border border-stone-900 px-5 py-2.5">Who should I talk to next?</button>
