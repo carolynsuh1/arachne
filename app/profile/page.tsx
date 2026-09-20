@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import ProfileForm from "./ProfileForm";
 import "../app.css";
 
-export const metadata = { title: "Your profile — Arachne" };
+export const metadata = { title: "Your profile | Arachne" };
 
 export default async function ProfilePage() {
   const user = await requireUser();

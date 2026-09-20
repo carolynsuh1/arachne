@@ -60,7 +60,7 @@ export default function GoalViewPanel({
             </ul>
           )}
           {ranked.length > 0 && (
-            <p className="side-note">Percentages are relative to your best match, not an absolute score.</p>
+            <p className="side-note">Each percentage compares a person to your best match.</p>
           )}
           {data.unscored > 0 && (
             <p className="side-note">

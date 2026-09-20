@@ -6,7 +6,7 @@ import MapClient from "./MapClient";
 import "../app.css";
 import "./map.css";
 
-export const metadata = { title: "Your web — Arachne" };
+export const metadata = { title: "Your web | Arachne" };
 
 export default async function MapPage() {
   const user = await requireUser();

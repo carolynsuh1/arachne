@@ -198,7 +198,7 @@ export default function AskPanel({
         </div>
       </form>
       <p className="side-note plan-provider">
-        Answers are built from the relationships and notes in the network, not from the internet. Cited people glow on the map.
+        Answers come only from the relationships and notes in the network. Cited people glow on the map.
       </p>
     </div>
   );

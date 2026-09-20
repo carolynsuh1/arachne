@@ -37,7 +37,7 @@ export default function LoginForm() {
     <div className="auth-card">
       <h1 className="auth-title">{isLogin ? "Welcome back" : "Create your account"}</h1>
       <p className="auth-sub">
-        {isLogin ? "Log in to keep mapping your network." : "Sign up to start charting your true network."}
+        {isLogin ? "Log in to keep mapping your network." : "Sign up to start mapping your network."}
       </p>
 
       <div className="tabs" role="tablist">

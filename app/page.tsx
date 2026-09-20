@@ -24,20 +24,20 @@ const steps = [
   {
     n: "01",
     icon: "file-search",
-    title: "Consolidate Public Context",
-    text: "Our cartographer agent scans public academic papers, patents, directories, and web mentions. No scraping of private message vaults or locked profiles.",
+    title: "Gather Public Context",
+    text: "Our cartographer agent scans public academic papers, patents, directories, and web mentions. It never scrapes private messages or locked profiles.",
   },
   {
     n: "02",
     icon: "share-2",
-    title: "Synthesize Relationship Paths",
-    text: "Observe how nodes overlap. Learn who was in the same cohort, co-authored reports, or shared investment rounds, cleanly laid out in visual threads.",
+    title: "Trace Relationship Paths",
+    text: "Arachne shows who was in the same cohort, co-authored a report, or shared an investment round, with each link drawn as a thread.",
   },
   {
     n: "03",
     icon: "message-circle",
-    title: "Spark Gracious Conversations",
-    text: "Receive smart prompt recommendations that focus on warm, shared interests, transforming cold outreaches into meaningful mutual discovery.",
+    title: "Start Warmer Conversations",
+    text: "Get prompts built on shared interests, so a cold message opens with something you both care about.",
   },
 ];
 
@@ -98,8 +98,8 @@ export default function Home() {
             A quiet map for your raw <span className="accent">human connections</span>
           </h1>
           <p className="hero-sub">
-            Arachne synthesizes publicly available web directories to reconstruct your professional constellation. No
-            surveillance, no invasion. Just thoughtful prompts, warm referrals, and total context ownership.
+            Arachne reads publicly available web directories and rebuilds your professional network as a map. You get
+            thoughtful prompts and warm referrals, and you own all of the context.
           </p>
         </div>
         <div className="hero-actions">
@@ -174,7 +174,7 @@ export default function Home() {
       <section className="workflow" id="how">
         <div className="section-head">
           <p className="eyebrow eyebrow-cyan">How Arachne Connects</p>
-          <h2 className="workflow-title">Unveil relational paths seamlessly</h2>
+          <h2 className="workflow-title">See how your people connect</h2>
         </div>
         <div className="steps-row">
           {steps.map((s) => (
@@ -199,17 +199,17 @@ export default function Home() {
         <div className="feature-copy">
           <div className="feature-text">
             <p className="eyebrow eyebrow-amber">FEATURE PREVIEW ONE</p>
-            <h2>Prompt contexts, not pre-scripted pitches</h2>
+            <h2>Prompts built from real context</h2>
             <p className="feature-body">
-              Most outreach fails because it relies on generic templates. Arachne maps natural cross-sections in your
-              networks — like shared publications, past co-working chapters, or mutual investments — and drafts
-              personalized conversation triggers that respect the other party&apos;s time and actual history.
+              Generic templates get ignored. Arachne finds where your networks overlap, such as shared publications,
+              places you both worked, or mutual investments, and drafts an opening line that refers to the other
+              person&apos;s actual history.
             </p>
           </div>
           <div className="checklist">
-            <Check color="amber">100% natural, context-rich triggers</Check>
-            <Check color="amber">Sourced solely from public professional histories</Check>
-            <Check color="amber">Directly highlights verified third-party handshakes</Check>
+            <Check color="amber">Openers that reference real, shared context</Check>
+            <Check color="amber">Sourced only from public professional histories</Check>
+            <Check color="amber">Points to the verified mutual connection</Check>
           </div>
         </div>
         <div className="panel-wrap">
@@ -231,7 +231,7 @@ export default function Home() {
                 <p>
                   &quot;Hi Sana, I noticed your portfolio company Apex Systems co-published the recent report on
                   Decentralized Grid Stability with Devon Cole. I&apos;ve been tracing Devon&apos;s work on load
-                  balancing — would love to trade brief notes on where your system models intersect.&quot;
+                  balancing, and I&apos;d love to trade brief notes on where your system models intersect.&quot;
                 </p>
               </div>
             </div>
@@ -270,17 +270,16 @@ export default function Home() {
         <div className="feature-copy">
           <div className="feature-text">
             <p className="eyebrow eyebrow-cyan">FEATURE PREVIEW TWO</p>
-            <h2>Document mutual pathways honestly</h2>
+            <h2>See why two people know each other</h2>
             <p className="feature-body">
-              Relationships don&apos;t live in isolated spreadsheets. Arachne visualizes verified paths so you can ask
-              for referrals with high social context. No assumptions are made — each pathway link highlights exactly why
-              those people know each other, giving you a safe and honest map for warm outreach.
+              Arachne draws verified paths between people so you can ask for a referral with real context. Each link
+              states why those two people know each other, so your outreach rests on facts you can check.
             </p>
           </div>
           <div className="checklist">
-            <Check color="cyan">Clearly shows historical evidence (co-authored, same investor)</Check>
-            <Check color="cyan">Lets you map customized referral hierarchies manually</Check>
-            <Check color="cyan">Keeps your warm introduction pipeline private to your eyes</Check>
+            <Check color="cyan">Shows the evidence for each link (co-authored, same investor)</Check>
+            <Check color="cyan">Lets you map referral chains by hand</Check>
+            <Check color="cyan">Keeps your introduction pipeline private to you</Check>
           </div>
         </div>
       </section>
@@ -314,8 +313,7 @@ export default function Home() {
                 <span>Arachne</span>
               </div>
               <p>
-                Intelligent relationship cartography built with strict user consent, open-source auditing, and total
-                respect for human network agency.
+                Relationship mapping built on public sources and explicit user consent.
               </p>
             </div>
             {footerCols.map((c) => (
@@ -330,7 +328,7 @@ export default function Home() {
             ))}
           </div>
           <div className="footer-bottom">
-            <p>© 2026 Arachne Technologies Inc. Relational cartography systems patented.</p>
+            <p>© 2026 Arachne Technologies Inc.</p>
             <div className="footer-legal">
               <p>Privacy Statement</p>
               <p>Opt-Out Portal</p>

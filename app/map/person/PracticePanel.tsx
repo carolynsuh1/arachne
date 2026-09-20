@@ -134,7 +134,7 @@ export default function PracticePanel({ person }: { person: Person }) {
           {error}
         </p>
       )}
-      <p className="side-note plan-provider">Practice replies are scripted from what the network knows about them; it&apos;s a warm-up, not a prediction.</p>
+      <p className="side-note plan-provider">Practice replies are scripted from what the network knows about them, so use it as a warm-up.</p>
     </div>
   );
 }

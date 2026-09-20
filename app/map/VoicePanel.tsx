@@ -13,7 +13,7 @@ export default function VoicePanel({ meetingId = "" }: { meetingId?: string }) {
         {voice.state}
       </div>
       <p className="side-note">
-        Audio is sent as PCM16 at 16 kHz. Replies play as PCM16 at 24 kHz. Arachne can only access people on your map.
+        Arachne can only see the people on your map.
       </p>
       <div className="panel-actions">
         {active ? (

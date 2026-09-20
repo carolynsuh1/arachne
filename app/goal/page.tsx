@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import GoalForm from "./GoalForm";
 import "../app.css";
 
-export const metadata = { title: "Your goal — Arachne" };
+export const metadata = { title: "Your goal | Arachne" };
 
 export default async function GoalPage() {
   const user = await requireUser();

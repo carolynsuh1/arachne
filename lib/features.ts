@@ -52,7 +52,7 @@ export const GLOBAL_FEATURES: Feature[] = [
   {
     id: "braindump",
     label: "Brain dump",
-    blurb: "Type or say everything you remember; it extracts people, follow-ups and reminders for you.",
+    blurb: "Type or say what you remember, and Arachne pulls out the people, follow-ups and reminders.",
     endpoints: ["POST /brain-dumps/extract", "POST /brain-dumps/confirm", "GET /brain-dumps/who-next"],
     teamNav: "Goal views (then Brain dump on a person)",
     phase: 3,
