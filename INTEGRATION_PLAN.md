@@ -70,11 +70,14 @@ Each phase ends with something demoable. The **Phase** column in `lib/features.t
 - **Known gaps:** people saved while the backend was offline are not retried automatically (a "sync now" action is a small follow-up); existing sample people linked from the network keep the university the backend has for them (empty for seed data); no edge types beyond "recommends chat"/"suggested intro" are shown.
 - **Done when:** people added on `/map` appear in the team's Vite graph. Verified for the backend record and university; the reverse direction (Vite-created people appearing on a user's map) is by design not automatic, since a map only shows people the user added.
 
-### Phase 2: Goal drives the map
-- `/goal` submit also calls `POST /goals` and `POST /agents/goal-network`; store `backendGoalId`.
-- **Suggest people** button → shows sub-goals and target profiles from the plan.
-- **Goal views** button → `GET /goals/{id}/graph` and `GET /network/tracker` (group by company, club, area); highlight matching people on the map.
-- **Done when:** changing the goal changes which nodes are highlighted.
+### Phase 2: Goal drives the map: DONE
+- Saving a goal on `/goal` runs the backend goal agent in the background (`POST /agents/goal-network`, which creates the goal **and** its plan in one call, so we do not also call `POST /goals`). The backend goal id and the text it was made from are stored on the profile (`backendGoalId`, `backendGoalText`); the agent re-runs only when the goal text changes. Concurrent requests share one run, so repeated page loads never create duplicate goals. If the backend forgot the goal (404, e.g. its database was reset) it is recreated once automatically.
+- **Suggest people** button: the agent's summary, next steps and kinds of people to meet, plus people elsewhere in the shared network who fit the goal but aren't on this map, each with **Add to my map** (links to the existing record, so no duplicate-name prompt).
+- **Goal views** button: how each person on the map scores against the goal (relative to the best match, with the reason), then groups by university, company, club, other organization and place (`GET /network/tracker`, filtered to this user's people).
+- **Map highlight:** the top three matches glow amber and other matches get an amber outline; refreshed on load and after anyone is added.
+- Backend changes (tested; suite is 42 passing): `GET /goals/{id}/graph` takes an optional `person_ids` filter so a user's own people are scored (and all returned, including zero matches); `university` now counts toward the match. Without `person_ids` the endpoint behaves exactly as before.
+- Verified against the real backend: matches change when the goal changes (Berkeley-driven → robotics-driven); exactly one backend goal per distinct goal text; self-repair after a stale goal id; offline (all endpoints still answer, goal still saves, panels say what's missing, university groups still work from local data).
+- **Known gaps:** people saved while the backend was offline can't be scored until they sync; match percentages are relative, not absolute; without an `OPENAI_API_KEY` the plan comes from the backend's built-in planner (the panel says which wrote it); each new goal text leaves one more goal row in the shared backend (there is no delete endpoint).
 
 ### Phase 3: Per-person actions (text-based)
 Click a person → panel (already built). Wire up each action:

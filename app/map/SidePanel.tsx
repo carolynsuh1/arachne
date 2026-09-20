@@ -2,8 +2,12 @@
 
 import { useEffect } from "react";
 import { PERSON_FEATURES, type Feature } from "@/lib/features";
+import type { GoalViewData } from "@/lib/goal-view";
+import type { MapPerson } from "@/lib/network";
+import GoalViewPanel from "./GoalViewPanel";
+import PlanPanel from "./PlanPanel";
 
-export type Person = { id: string; name: string; university: string; synced?: boolean };
+export type Person = MapPerson;
 
 export type PanelView =
   | { kind: "person"; person: Person }
@@ -15,10 +19,17 @@ export default function SidePanel({
   view,
   onClose,
   onOpen,
+  goalView,
+  people,
+  onAdded,
 }: {
   view: PanelView;
   onClose: () => void;
   onOpen: (v: PanelView) => void;
+  goalView: GoalViewData | null;
+  people: Person[];
+  /** A person was added from a suggestion; the map should show them. */
+  onAdded: (p: Person) => void;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -64,6 +75,16 @@ export default function SidePanel({
               </button>
             ))}
           </div>
+        </div>
+      ) : view.feature.id === "suggest" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <PlanPanel onAdded={onAdded} />
+        </div>
+      ) : view.feature.id === "goalviews" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <GoalViewPanel data={goalView} people={people} onSelect={(p) => onOpen({ kind: "person", person: p })} />
         </div>
       ) : (
         <div className="side-body">

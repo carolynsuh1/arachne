@@ -58,5 +58,42 @@ export const createTeamPerson = (person: { name: string; university: string }) =
 
 export const getTeamGraph = () => teamFetch<TeamGraph>("/graph");
 
+export type GoalPlan = {
+  goal: { id: string; text: string };
+  summary: string;
+  subgoals: { text: string; why: string }[];
+  needed_connections: { kind: string; query: string; why: string }[];
+  /** "openai" when a key is configured on the backend, otherwise "heuristic". */
+  provider: string;
+};
+export type RankedPerson = { id: string; name: string; score: number; why: string };
+export type GoalGraph = {
+  nodes: { id: string; data: { name: string; location?: string | null; companies?: string[] } }[];
+  ranked: RankedPerson[];
+};
+export type TrackerPerson = {
+  id: string;
+  name: string;
+  location: string;
+  companies: string[];
+  clubs: string[];
+  organizations: string[];
+};
+
+/** Creates the goal AND its plan in one call (do not also POST /goals or you get a duplicate). */
+export const runGoalAgent = (text: string) =>
+  teamFetch<GoalPlan>("/agents/goal-network", { method: "POST", body: JSON.stringify({ text }) }, 45000);
+
+export const getGoalPlan = (goalId: string) => teamFetch<GoalPlan>(`/agents/goal-network/${encodeURIComponent(goalId)}`);
+
+/** With personIds, only those people are scored (a user's own map); without, the network-wide top matches. */
+export const getGoalGraph = (goalId: string, personIds?: string[]) =>
+  teamFetch<GoalGraph>(
+    `/goals/${encodeURIComponent(goalId)}/graph` +
+      (personIds ? `?person_ids=${encodeURIComponent(personIds.join(","))}` : ""),
+  );
+
+export const getTracker = () => teamFetch<{ people: TrackerPerson[] }>("/network/tracker");
+
 /** Same normalisation the backend uses to decide two names are the same person. */
 export const normalizeName = (name: string) => name.trim().split(/\s+/).join(" ").toLowerCase();

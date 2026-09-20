@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -31,8 +31,15 @@ def list_goals(db: Session = Depends(get_db)):
 
 
 @router.get("/{goal_id}/graph", response_model=GraphOut)
-def goal_graph(goal_id: str, db: Session = Depends(get_db)):
-    graph = build_goal_view(db, goal_id)
+def goal_graph(
+    goal_id: str,
+    person_ids: str | None = Query(None, max_length=8000, description="Comma-separated person ids to score instead of the whole network."),
+    db: Session = Depends(get_db),
+):
+    ids = None
+    if person_ids is not None:
+        ids = [item for item in (part.strip() for part in person_ids.split(",")) if item][:100]
+    graph = build_goal_view(db, goal_id, ids)
     if graph is None:
         raise HTTPException(status_code=404, detail="Goal not found.")
     return graph

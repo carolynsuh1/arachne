@@ -11,6 +11,8 @@ export type Feature = {
   teamNav: string;
   /** Integration phase from INTEGRATION_PLAN.md. */
   phase: number;
+  /** True once the button is really wired to the backend (its panel shows live content, not the placeholder). */
+  ready?: boolean;
 };
 
 export const GLOBAL_FEATURES: Feature[] = [
@@ -59,6 +61,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     endpoints: ["POST /agents/goal-network", "GET /agents/goal-network/{id}"],
     teamNav: "Goal agent",
     phase: 2,
+    ready: true,
   },
   {
     id: "goalviews",
@@ -67,6 +70,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     endpoints: ["GET /goals/{id}/graph", "GET /network/tracker"],
     teamNav: "Goal views",
     phase: 2,
+    ready: true,
   },
 ];
 

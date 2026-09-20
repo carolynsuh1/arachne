@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { postJson } from "@/components/api";
 import { GLOBAL_FEATURES } from "@/lib/features";
+import type { GoalViewData } from "@/lib/goal-view";
 import type { MapEdge, MapPerson, UserNetwork } from "@/lib/network";
 import SidePanel, { type PanelView } from "./SidePanel";
 
@@ -59,6 +60,7 @@ export default function MapClient({
   const [online, setOnline] = useState(initial.online);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<PanelView | null>(null);
+  const [goalView, setGoalView] = useState<GoalViewData | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -86,6 +88,26 @@ export default function MapClient({
     setEdges(network.edges);
     setOnline(network.online);
   }, []);
+
+  // How well each person fits the goal (from the team backend). Runs on load and after the map changes.
+  const refreshGoalView = useCallback(async () => {
+    const res = await fetch("/api/net/goal-view").catch(() => null);
+    if (res?.ok) setGoalView(await res.json());
+  }, []);
+  useEffect(() => {
+    void refreshGoalView();
+  }, [refreshGoalView]);
+
+  const matchById = new Map((goalView?.matches ?? []).map((m) => [m.personId, m]));
+  const strongMatchIds = new Set(
+    (goalView?.matches ?? []).filter((m) => m.score > 0).slice(0, 3).map((m) => m.personId),
+  );
+
+  function addedPerson(p: MapPerson) {
+    setPeople((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]));
+    void refresh();
+    void refreshGoalView();
+  }
 
   const spot = new Map(people.map((p, i) => [p.id, positionFor(i, xStretch)]));
 
@@ -158,14 +180,17 @@ export default function MapClient({
 
           {people.map((p) => {
             const { x, y } = spot.get(p.id)!;
+            const match = matchById.get(p.id);
+            const matchClass = strongMatchIds.has(p.id) ? " node-match-strong" : match && match.score > 0 ? " node-match" : "";
             return (
               <button
                 key={p.id}
                 type="button"
-                className={`node node-person node-new${panel && "person" in panel && panel.person?.id === p.id ? " node-selected" : ""}`}
+                className={`node node-person node-new${matchClass}${panel && "person" in panel && panel.person?.id === p.id ? " node-selected" : ""}`}
                 style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
                 onClick={() => setPanel({ kind: "person", person: p })}
-                aria-label={`${p.name}, ${p.university}. Open actions`}
+                title={match && match.score > 0 ? `Goal match: ${match.why}` : undefined}
+                aria-label={`${p.name}, ${p.university}.${match && match.score > 0 ? ` Goal match: ${match.why}` : ""} Open actions`}
               >
                 <span className="node-avatar">{initials(p.name)}</span>
                 <span className="node-info">
@@ -178,23 +203,40 @@ export default function MapClient({
         </div>
 
         {people.length === 0 && <p className="map-empty">This is you. Add a person to start growing your web.</p>}
-        {edges.length > 0 && (
+        {(edges.length > 0 || strongMatchIds.size > 0) && (
           <p className="map-legend">
             <span className="legend-line legend-thread" /> your contacts
-            <span className="legend-line legend-link" /> relationships in the team network
+            {edges.length > 0 && (
+              <>
+                <span className="legend-line legend-link" /> relationships in the team network
+              </>
+            )}
+            {strongMatchIds.size > 0 && (
+              <>
+                <span className="legend-dot" /> closest to your goal
+              </>
+            )}
           </p>
         )}
       </div>
 
-      {panel && <SidePanel view={panel} onClose={() => setPanel(null)} onOpen={setPanel} />}
+      {panel && (
+        <SidePanel
+          view={panel}
+          onClose={() => setPanel(null)}
+          onOpen={setPanel}
+          goalView={goalView}
+          people={people}
+          onAdded={addedPerson}
+        />
+      )}
 
       {open && (
         <AddPersonModal
           onClose={() => setOpen(false)}
           onAdded={(p) => {
-            setPeople((prev) => [...prev, p]);
+            addedPerson(p);
             setOpen(false);
-            void refresh();
           }}
         />
       )}

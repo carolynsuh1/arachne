@@ -30,6 +30,10 @@ model Profile {
   education      String   @default("")
   interests      String   @default("")
   goal           String   @default("")
+  // The team backend's goal (and the goal text it was created from), so the goal agent only re-runs
+  // when the user changes their goal. Null until the backend has been reachable once.
+  backendGoalId   String?
+  backendGoalText String?
   profileDone    Boolean  @default(false)
   updatedAt      DateTime @updatedAt
 }

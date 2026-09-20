@@ -25,12 +25,21 @@ ROLE_ALIASES = {
 }
 
 
-def build_goal_view(db: Session, goal_id: str) -> GraphOut | None:
+def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = None) -> GraphOut | None:
+    """Rank people against a goal.
+
+    By default the best few matches across the whole network are returned. When `person_ids` is given
+    (a user's own map inside the shared network), only those people are scored and all of them are
+    returned, best first, including ones with no overlap yet.
+    """
     goal = db.get(Goal, goal_id)
     if goal is None:
         return None
     plan = db.get(GoalPlan, goal_id)
     people = db.query(Person).order_by(Person.name).all()
+    if person_ids is not None:
+        wanted = set(person_ids)
+        people = [person for person in people if person.id in wanted]
     organizations = {row.id: row for row in db.query(Organization).all()}
     profiles = {row.person_id: row for row in db.query(PersonProfile).all()}
     rels = db.query(Relationship).all()
@@ -60,7 +69,12 @@ def build_goal_view(db: Session, goal_id: str) -> GraphOut | None:
     scored.sort(key=lambda item: (-item[1], item[0].name))
 
     positive = [item for item in scored if item[1] > 0]
-    selected = (positive[:6] if len(positive) >= 3 else scored[: min(6, len(scored))])
+    if person_ids is not None:
+        selected = scored
+        fallback_why = "No overlap with this goal yet."
+    else:
+        selected = positive[:6] if len(positive) >= 3 else scored[: min(6, len(scored))]
+        fallback_why = "Included as the closest available network match."
     positions = _ring_positions(len(selected))
     nodes: list[GraphNode] = []
     ranked: list[RankedNode] = []
@@ -73,7 +87,7 @@ def build_goal_view(db: Session, goal_id: str) -> GraphOut | None:
         why = (
             f"Matches {', '.join(matched[:4])}."
             if matched
-            else "Included as the closest available network match."
+            else fallback_why
         )
         maximum_score = max(1, len(core_terms) * 3 + len(context_terms))
         normalized_score = round(min(1.0, score / maximum_score), 3)
@@ -185,7 +199,7 @@ def _score_person(
     skills = " ".join(json.loads(person.skills or "[]"))
     org_text = " ".join(f"{org.name} {org.type}" for org in orgs)
     location = profile.location if profile else ""
-    document = f"{person.name} {person.bio} {interests} {skills} {org_text} {location}".lower()
+    document = f"{person.name} {person.university or ''} {person.bio} {interests} {skills} {org_text} {location}".lower()
     matched_core = sorted({term for term in core_terms if term in document})
     matched_context = sorted({term for term in context_terms if term in document})
     matched = matched_core + matched_context

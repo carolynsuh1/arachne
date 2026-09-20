@@ -124,6 +124,185 @@
   border-top: 1px dashed rgba(245, 158, 11, 0.8);
 }
 
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 8px;
+  border: 1px solid var(--amber);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* ---------- Plan and goal-view panels ---------- */
+.side-plan-summary {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--white);
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.plan-list-plain {
+  padding-left: 0;
+  list-style: none;
+}
+
+.plan-list li {
+  line-height: 1.4;
+}
+
+.plan-list strong {
+  display: block;
+  color: var(--text);
+}
+
+.plan-list span {
+  display: block;
+  margin-top: 2px;
+}
+
+.suggestion-list,
+.match-list,
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.suggestion-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.suggestion-why,
+.suggestion-meta {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.suggestion-meta {
+  color: var(--dim);
+}
+
+.suggestion-add {
+  flex: none;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.plan-provider {
+  color: var(--dim);
+}
+
+.match-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.match-row:hover {
+  border-color: var(--amber);
+}
+
+.match-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.match-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.match-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.match-bar {
+  display: block;
+  height: 4px;
+  background: var(--bg);
+  border-radius: 2px;
+}
+
+.match-bar span {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+  border-radius: 2px;
+}
+
+.match-why {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.group-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 8px 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.group-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.group-count {
+  font-size: 12px;
+  color: var(--cyan);
+}
+
+.group-people {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .node {
   position: absolute;
   display: flex;
@@ -150,6 +329,16 @@
 .node-selected {
   background: var(--raised);
   border-color: var(--cyan);
+}
+
+/* Closest matches to the user's goal, from the team backend's goal matcher. */
+.node-match {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
+.node-match-strong {
+  border-color: var(--amber);
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.55));
 }
 
 .node-me {
