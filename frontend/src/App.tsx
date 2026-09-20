@@ -1,3 +1,4 @@
+import { FollowUpsPage } from "./pages/FollowUpsPage"
 import { useEffect, useState } from "react"
 import { GoalPage } from "./pages/GoalPage"
 import { GraphPage } from "./pages/GraphPage"
@@ -15,7 +16,7 @@ import type { ResearchTarget } from "./pages/ResearchPage"
 import { ProfilesPage } from "./pages/ProfilesPage"
 import type { SavedProfile } from "./pages/ProfilesPage"
 
-type Page = "copilot" | "practice" | "brain-dump" | "meetings" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
+type Page = "follow-ups" | "copilot" | "practice" | "brain-dump" | "meetings" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
 
 export default function App() {
   const [profiles,setProfiles]=useState<SavedProfile[]>([])
@@ -50,7 +51,8 @@ export default function App() {
     <div className="min-h-svh">
       <header className="flex flex-wrap items-center gap-4 border-b border-stone-300 px-6 py-4">
         <p className="text-xl">YourWeb</p>
-        <nav className="flex gap-2 font-sans text-sm">
+        <nav className="flex flex-wrap gap-2 font-sans text-sm">
+          <button onClick={()=>setPage("follow-ups")} className={`rounded-full px-4 py-1.5 ${page === "follow-ups" ? "bg-stone-900 text-white" : "text-stone-700"}`}>Follow-ups</button>
           <button
             type="button"
             onClick={() => openMeeting()}
@@ -99,7 +101,7 @@ export default function App() {
       </header>
       <main className="px-6 py-10">
         {profileError&&<p role="alert" className="mb-4 text-red-700">{profileError}</p>}
-        {page === "copilot" ? (
+        {page === "follow-ups" ? <FollowUpsPage onResearch={person=>{setTarget(person);setPage("research")}}/> : page === "copilot" ? (
           <CopilotPage onPractice={openPractice} />
         ) : page === "practice" && practicePerson ? (
           <PracticePage person={practicePerson} onBack={() => setPage("copilot")} />
