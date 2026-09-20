@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import re
+from html import unescape
 
 import httpx
 
@@ -64,10 +66,38 @@ def api_key() -> str:
     return _api_key()
 
 
+def to_speakable_text(text: str) -> str:
+    """Convert display-oriented Markdown or HTML into plain text for TTS."""
+    value = unescape(str(text))
+    value = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", value)
+    value = re.sub(r"```(?:[A-Za-z0-9_+-]+)?\s*([\s\S]*?)```", r"\1", value)
+    value = re.sub(r"`([^`]*)`", r"\1", value)
+    value = re.sub(r"<[^>]+>", " ", value)
+
+    spoken_lines: list[str] = []
+    for raw_line in value.splitlines():
+        line = re.sub(r"^\s{0,3}#{1,6}\s+", "", raw_line)
+        line = re.sub(r"^\s*>\s?", "", line)
+        bullet = bool(re.match(r"^\s*(?:[-+*]|\d+[.)])\s+", line))
+        line = re.sub(r"^\s*(?:[-+*]|\d+[.)])\s+", "", line).strip()
+        line = re.sub(r"(\*\*|__|\*|_|~~)", "", line)
+        line = re.sub(r"\\([\\`*_[\]{}()#+\-.!>])", r"\1", line)
+        if not line:
+            continue
+        if bullet and line[-1] not in ".!?":
+            line += "."
+        spoken_lines.append(line)
+    return re.sub(r"\s+", " ", " ".join(spoken_lines)).strip()
+
+
 def voice_agent_settings(mode: str, goal_context: str = "") -> dict:
     """Build one Voice Agent configuration shared by every voice surface."""
     prompt = (
         "You are YourWeb's continuous voice interface. Be concise and conversational. "
+        "Your replies are sent directly to speech synthesis, so respond only in natural "
+        "spoken prose. Never use Markdown, HTML, asterisks, underscores, backticks, headings, "
+        "bullets, numbered lists, or other visual formatting. Do not use symbols for emphasis. "
         "Use tools for all claims about the user's network, meetings, goals, and reminders. "
         "Never invent people or memories. Ask a follow-up when reminder details are missing. "
         "Before a permanent write, summarize it and ask for explicit confirmation; only call "

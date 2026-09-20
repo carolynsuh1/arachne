@@ -1,7 +1,11 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from app.pipeline.deepgram import transcribe_audio, voice_agent_settings
+from app.pipeline.deepgram import (
+    to_speakable_text,
+    transcribe_audio,
+    voice_agent_settings,
+)
 
 
 class DeepgramTests(unittest.TestCase):
@@ -34,6 +38,23 @@ class DeepgramTests(unittest.TestCase):
         }
         self.assertIn("search_people", names)
         self.assertIn("create_reminder", names)
+        prompt = settings["agent"]["think"]["prompt"]
+        self.assertIn("respond only in natural spoken prose", prompt)
+        self.assertIn("Never use Markdown", prompt)
+
+    def test_markdown_is_removed_from_spoken_text(self):
+        self.assertEqual(
+            to_speakable_text("**Talk to Sarah next**"),
+            "Talk to Sarah next",
+        )
+
+    def test_headers_code_and_bullets_become_speakable_prose(self):
+        self.assertEqual(
+            to_speakable_text(
+                "# Next steps\n- Call `Sarah`\n- Review __meeting notes__"
+            ),
+            "Next steps Call Sarah. Review meeting notes.",
+        )
 
 
 if __name__ == "__main__":
