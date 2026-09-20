@@ -28,6 +28,14 @@ export function validateInput(raw) {
   }
   if (raw.profileUrl != null && typeof raw.profileUrl !== 'string') throw new ResearchError('profileUrl must be a string.');
   input.profileUrl = raw.profileUrl ? publicUrl(raw.profileUrl) : null;
+  const profile = raw.viewerProfile ?? {};
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) throw new ResearchError('Invalid personal profile.');
+  input.viewerProfile = {};
+  for (const [key,max] of [['name',120],['school',180],['background',1200],['interests',700],['goals',700],['contribution',700],['professionalBackground',14000]]) {
+    const value=profile[key]??'';
+    if(typeof value!=='string'||value.length>max)throw new ResearchError(`Invalid personal profile ${key}.`);
+    input.viewerProfile[key]=value.trim();
+  }
   input.refresh = raw.refresh === true;
   return input;
 }
@@ -83,14 +91,14 @@ export function acceptExtraction(raw, sources, person) {
         evidence: fact.evidence, sourceKind:source.kind??'page', date: typeof fact.date === 'string' ? fact.date : null });
     } else warnings.push('An unsupported or identity-ambiguous fact was excluded.');
   }
-  return { facts: facts.slice(0, 12), accepted, warnings,
+  return { facts: facts.slice(0, 60), accepted, warnings,
     uncertainties: (raw.uncertainties ?? []).filter(s => typeof s === 'string').slice(0, 8) };
 }
-export function acceptQuestions(raw, facts) {
+export function acceptQuestions(raw, facts, limit=3) {
   const ids = new Set(facts.map(f => f.id));
   return (raw.questions ?? []).filter(q => typeof q.text === 'string' && q.text.trim() &&
     Array.isArray(q.factIds) && q.factIds.length > 0 && q.factIds.every(id => ids.has(id)))
-    .slice(0, 3).map(q => ({ text: q.text, factIds: q.factIds, label: 'AI-suggested question; review before use' }));
+    .slice(0, limit).map(q => ({ text: q.text, factIds: q.factIds, kind:q.kind, viewerEvidence:typeof q.viewerEvidence==='string'?q.viewerEvidence:'', label: 'AI-suggested question; review before use' }));
 }
 
 export function createResearcher(provider, { ttlMs = 3_600_000, now = Date.now } = {}) {
@@ -163,12 +171,7 @@ export function createResearcher(provider, { ttlMs = 3_600_000, now = Date.now }
     base.warnings.push(...extraction.warnings);
     if (!base.facts.length) return { ...base, status: 'insufficient_information', uncertainties: extraction.uncertainties };
     try {
-      if(base.facts.every(f=>f.sourceKind==='search_index'))base.questions=[
-        'What are you focusing on in your studies or work right now?',
-        'Which project or experience would you most like to talk about?',
-        'What kinds of collaboration would be useful to you at the moment?'
-      ].map(text=>({text,factIds:[],label:'General conversation prompt; limited profile evidence'}));
-      else base.questions = acceptQuestions(await provider.questions(input, base.facts, signal), base.facts);
+      Object.assign(base, await generateQuestions(provider, input, base.facts, signal));
     }
     catch { base.warnings.push('Question generation failed; supported facts are still available.'); }
     const result = { ...base, status: 'ready', coverage:base.facts.every(f=>f.sourceKind==='search_index')?'indexed_only':base.facts.some(f=>f.sourceKind==='search_index')?'mixed':'retrieved_sources', uncertainties: base.facts.every(f=>f.sourceKind==='search_index') ? ['Only search-index excerpts were available. The full profile, current status, experience, education details and projects have not been verified.','Truncated phrases are preserved as incomplete text and must not be expanded into claims.'] : extraction.uncertainties,
@@ -180,4 +183,19 @@ export function createResearcher(provider, { ttlMs = 3_600_000, now = Date.now }
     }
     return result;
   };
+}
+
+
+export async function generateQuestions(provider, raw, facts, signal=AbortSignal.timeout(90000)) {
+  const input=validateInput(raw);
+  if(!Array.isArray(facts)||!facts.length||facts.length>60||facts.some(f=>typeof f.id!=='string'||typeof f.claim!=='string'))throw new ResearchError('A saved brief with sourced facts is required.');
+  const personalValues=Object.values(input.viewerProfile).filter(Boolean);
+  const candidates=acceptQuestions(await provider.questions(input,facts,signal),facts,6).map(q=>({...q,text:q.text.replace(/;\s*([a-z]?)/g,(_,letter)=>". "+letter.toUpperCase())})).filter(q=>
+    provider.mode!=='live'||(q.text.trim().split(/\s+/).length<=35&&!q.text.includes(';')&&!/\band (how|what|why|which)\b/i.test(q.text)&&(!personalValues.length||(q.viewerEvidence.trim().length>0&&q.viewerEvidence.length<=120&&personalValues.some(value=>value.includes(q.viewerEvidence)))))
+  );
+  const tagged=provider.mode==='live'&&personalValues.length&&candidates.some(q=>q.kind);
+  const questions=tagged?['connection','advice','story'].map(kind=>candidates.find(q=>q.kind===kind&&(kind==='story'||/\b(i|my|i'm)\b/i.test(q.text)))).filter(Boolean):candidates.slice(0,3);
+  if(tagged&&questions.length<3)throw new ResearchError('Could not create a full set connecting your background and goals. Try regenerating.',502);
+  if(!questions.length)throw new ResearchError('No supported questions were generated.',502);
+  return {questions, personalization:{profile:input.viewerProfile, goal:input.goal, generatedAt:new Date().toISOString()}};
 }

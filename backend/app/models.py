@@ -78,3 +78,18 @@ class ResearchBrief(Base):
     person_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     result_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ResumeRecord(Base):
+    __tablename__ = "resume_records"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    sha256: Mapped[str] = mapped_column(String, nullable=False)
+    result_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PersonalProfile(Base):
+    __tablename__ = "personal_profiles"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    data_json: Mapped[str] = mapped_column(Text)

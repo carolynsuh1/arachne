@@ -65,14 +65,21 @@ export function syncFromSample() {
   return request<SyncResponse>("/sync/sample", { method: "POST" })
 }
 
-export type ResearchInput = { name: string; affiliation: string; goal: string; profileUrl?: string; person_id?: string }
+export type ResearchInput = { name: string; affiliation: string; goal: string; viewer_profile_id?: string; profileUrl?: string; person_id?: string }
 export type ResearchResult = {
  status: string; person: string; coverage?: string; saved?: boolean; brief_id?: string;
  candidates?: {url:string;title:string;description?:string}[];
  facts?: {id:string;claim:string;sourceId:string;evidence:string}[];
  sources?: {id:string;url:string;title:string;retrievedAt:string}[];
- questions?: {text:string}[]; warnings?: string[]; uncertainties?: string[];
+ questions?: {text:string;viewerEvidence?:string}[];
+ discovery?: {url:string;title:string;status:string}[];
+ researchStats?: {discovered:number;attempted:number;retrieved:number};
+ personalization?: {profile:Record<string,string>;generatedAt:string}; warnings?: string[]; uncertainties?: string[];
  profile?: {headline:string;about:string;retrievedAt:string;experience:{company:string;position:string;summary:string;starts_at:string;ends_at:string}[];education:{school:string;degree:string;field_of_study:string;starts_at:string;ends_at:string}[]}
 }
 export function researchPerson(input: ResearchInput) { return request<ResearchResult>("/research", {method:"POST",body:JSON.stringify(input)}) }
 export function latestResearch(id:string) { return request<ResearchResult|null>("/research/people/"+encodeURIComponent(id)) }
+
+export function personalizeQuestions(briefId:string, profileId:string, goal:string) {
+ return request<ResearchResult>(`/research/briefs/${encodeURIComponent(briefId)}/questions`, {method:"POST",body:JSON.stringify({viewer_profile_id:profileId,goal})})
+}
