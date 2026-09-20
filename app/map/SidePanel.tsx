@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import RemovePerson from "./RemovePerson";
 import { PERSON_FEATURES, type Feature } from "@/lib/features";
 import type { GoalViewData } from "@/lib/goal-view";
 import type { MapPerson } from "@/lib/network";
@@ -89,6 +90,7 @@ export default function SidePanel({
               </button>
             ))}
           </div>
+          <RemovePerson key={view.person.id} person={view.person} />
         </div>
       ) : view.feature.id === "suggest" ? (
         <div className="side-body">

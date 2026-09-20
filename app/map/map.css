@@ -1033,3 +1033,8 @@ details summary {
     align-items: stretch;
   }
 }
+
+.remove-person { margin-top: 28px; padding-top: 20px; border-top: 1px solid #384151; }
+.remove-person .remove-person-button { color: #fda4af; border: 1px solid #9f4654; background: transparent; }
+.remove-person-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.remove-person [role="alert"] { color: #fda4af; margin-top: 12px; }
