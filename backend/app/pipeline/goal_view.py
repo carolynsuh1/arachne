@@ -3,12 +3,15 @@
 import json
 import re
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from ..agents.knowledge_graph import _ring_positions
-from ..models import Goal, GoalPlan, Organization, Person, PersonProfile, Relationship
+from ..models import GraphMutation, Goal, GoalPlan, Organization, Person, PersonProfile, Relationship
 from ..schemas import GraphEdge, GraphEdgeData, GraphNode, GraphNodeData, GraphOut, RankedNode
+from ..services.recommendations import rank_people_for_goal
+from ..services.relationship_scoring import score_relationship
 
 STOP_WORDS = {
     "a", "actually", "an", "and", "are", "at", "be", "can", "conversation",
@@ -43,6 +46,25 @@ def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = No
     organizations = {row.id: row for row in db.query(Organization).all()}
     profiles = {row.person_id: row for row in db.query(PersonProfile).all()}
     rels = db.query(Relationship).all()
+    recent_mutations = (
+        db.query(GraphMutation)
+        .filter(GraphMutation.created_at >= datetime.utcnow() - timedelta(minutes=10))
+        .all()
+    )
+    recent_relationship_ids = {
+        item.entity_id
+        for item in recent_mutations
+        if item.entity_type == "relationship"
+    }
+    recent_person_ids = {
+        item.entity_id for item in recent_mutations if item.entity_type == "person"
+    }
+    for rel in rels:
+        if rel.id in recent_relationship_ids:
+            if rel.source_type == "person":
+                recent_person_ids.add(rel.source_id)
+            if rel.target_type == "person":
+                recent_person_ids.add(rel.target_id)
 
     affiliated: dict[str, list[Organization]] = defaultdict(list)
     for rel in rels:
@@ -55,42 +77,32 @@ def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = No
             if org:
                 affiliated[rel.target_id].append(org)
 
-    core_terms, context_terms = _goal_terms(goal, plan)
-    scored = [
-        _score_person(
-            person,
-            profiles.get(person.id),
-            affiliated[person.id],
-            core_terms,
-            context_terms,
-        )
-        for person in people
-    ]
-    scored.sort(key=lambda item: (-item[1], item[0].name))
-
-    positive = [item for item in scored if item[1] > 0]
+    ranking = rank_people_for_goal(
+        db, goal_id, [person.id for person in people] if person_ids is not None else None
+    )
     if person_ids is not None:
-        selected = scored
+        selected = ranking
         fallback_why = "No overlap with this goal yet."
     else:
-        selected = positive[:6] if len(positive) >= 3 else scored[: min(6, len(scored))]
+        positive = [item for item in ranking if item["score"] > 0]
+        selected = (
+            positive[:6]
+            if len(positive) >= 3
+            else ranking[: min(6, len(ranking))]
+        )
         fallback_why = "Included as the closest available network match."
     positions = _ring_positions(len(selected))
     nodes: list[GraphNode] = []
     ranked: list[RankedNode] = []
+    people_by_id = {person.id: person for person in people}
 
-    for index, (person, score, matched) in enumerate(selected):
+    for index, item in enumerate(selected):
+        person = people_by_id[item["person_id"]]
         orgs = affiliated[person.id]
         companies = sorted({org.name for org in orgs if org.type == "company"})
         affiliations = sorted({org.name for org in orgs})
         location = profiles.get(person.id).location if profiles.get(person.id) else ""
-        why = (
-            f"Matches {', '.join(matched[:4])}."
-            if matched
-            else fallback_why
-        )
-        maximum_score = max(1, len(core_terms) * 3 + len(context_terms))
-        normalized_score = round(min(1.0, score / maximum_score), 3)
+        why = item["why"] if item["score"] > 0 else fallback_why
         nodes.append(
             GraphNode(
                 id=f"person:{person.id}",
@@ -104,7 +116,21 @@ def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = No
                     skills=json.loads(person.skills or "[]"),
                     relevant=True,
                     why=why,
-                    score=normalized_score,
+                    score=item["score"],
+                    goal_relevance=item["goal_relevance"],
+                    relationship_strength=item["relationship_strength"],
+                    confidence=item["confidence"],
+                    intro_probability=item["intro_probability"],
+                    last_interaction_at=item["last_interaction_at"],
+                    interaction_count=item["interaction_count"],
+                    rank=item["rank"],
+                    previous_rank=item["previous_rank"],
+                    score_delta=item["score_delta"],
+                    rank_delta=item["rank_delta"],
+                    change_reason=item["change_reason"],
+                    next_action=item["next_action"],
+                    score_explanation=item["score_explanation"],
+                    recently_mutated=person.id in recent_person_ids,
                     location=location,
                     companies=companies,
                     affiliations=affiliations,
@@ -116,8 +142,19 @@ def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = No
                 id=person.id,
                 name=person.name,
                 kind="person",
-                score=normalized_score,
+                score=item["score"],
                 why=why,
+                goal_relevance=item["goal_relevance"],
+                relationship_strength=item["relationship_strength"],
+                confidence=item["confidence"],
+                intro_probability=item["intro_probability"],
+                rank=item["rank"],
+                previous_rank=item["previous_rank"],
+                score_delta=item["score_delta"],
+                rank_delta=item["rank_delta"],
+                change_reason=item["change_reason"],
+                next_action=item["next_action"],
+                explanation=item["explanation"],
             )
         )
 
@@ -133,16 +170,31 @@ def build_goal_view(db: Session, goal_id: str, person_ids: list[str] | None = No
         if source not in selected_ids or target not in selected_ids or pair in linked_pairs:
             continue
         linked_pairs.add(pair)
+        metrics = score_relationship(db, rel)
         edges.append(
             GraphEdge(
                 id=f"goal-{goal_id}-{rel.id}",
                 source=source,
                 target=target,
-                label="recommends chat",
+                label=(
+                    "offered introduction"
+                    if rel.type == "offered_intro"
+                    else "suggested intro"
+                    if rel.type == "suggested_intro"
+                    else "recommends chat"
+                ),
                 data=GraphEdgeData(
                     type=rel.type,
                     strength=rel.strength,
                     evidence=rel.evidence,
+                    relationship_strength=metrics["relationship_strength"],
+                    confidence=metrics["confidence"],
+                    intro_probability=metrics["intro_probability"],
+                    last_interaction_at=metrics["last_interaction_at"],
+                    interaction_count=metrics["interaction_count"],
+                    structured_evidence=metrics["evidence"],
+                    score_explanation=metrics["explanation"],
+                    recently_mutated=rel.id in recent_relationship_ids,
                 ),
             )
         )

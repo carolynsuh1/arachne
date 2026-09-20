@@ -10,7 +10,7 @@ import re
 
 from sqlalchemy.orm import Session
 
-from ..models import Organization, Person, PersonProfile, Relationship
+from ..models import GraphEvidence, Organization, Person, PersonProfile, Relationship
 from .llm import call_terra, parse_json_object
 
 EXTRACT_PROMPT = """
@@ -230,19 +230,49 @@ def _upsert_org(db: Session, org: dict) -> None:
 def _upsert_rel(db: Session, rel: dict) -> None:
     row = db.get(Relationship, rel["id"])
     if row is None:
-        db.add(
-            Relationship(
-                id=rel["id"],
-                source_type=rel["source_type"],
-                source_id=rel["source_id"],
-                target_type=rel["target_type"],
-                target_id=rel["target_id"],
-                type=rel["type"],
-                strength=rel["strength"],
-                evidence=rel["evidence"],
-            )
+        row = Relationship(
+            id=rel["id"],
+            source_type=rel["source_type"],
+            source_id=rel["source_id"],
+            target_type=rel["target_type"],
+            target_id=rel["target_id"],
+            type=rel["type"],
+            strength=rel["strength"],
+            relationship_strength=rel["strength"],
+            confidence=0.4,
+            evidence=rel["evidence"],
         )
+        db.add(row)
+        if rel["evidence"]:
+            db.add(
+                GraphEvidence(
+                    id=f"legacy-{rel['id']}",
+                    entity_type="relationship",
+                    entity_id=rel["id"],
+                    evidence_type="extraction",
+                    evidence_id=rel["id"],
+                    event_type="observation",
+                    excerpt=rel["evidence"],
+                    confidence=0.4,
+                )
+            )
         return
     row.strength = max(row.strength, rel["strength"])
+    row.relationship_strength = max(
+        row.relationship_strength or 0.0, rel["strength"]
+    )
     if rel["evidence"] and rel["evidence"] not in (row.evidence or ""):
         row.evidence = f"{row.evidence} {rel['evidence']}".strip()
+    if rel["evidence"] and db.get(GraphEvidence, f"legacy-{rel['id']}") is None:
+        db.add(
+            GraphEvidence(
+                id=f"legacy-{rel['id']}",
+                entity_type="relationship",
+                entity_id=rel["id"],
+                evidence_type="extraction",
+                evidence_id=rel["id"],
+                event_type="observation",
+                excerpt=rel["evidence"],
+                confidence=0.4,
+            )
+        )

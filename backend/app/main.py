@@ -7,22 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, SessionLocal, engine
 from .internal_key import install_internal_key_guard
+from .migrations import migrate_schema
 from .routers import followups, agents, brain_dumps, copilot, goals, graph, interactions, meetings, network, pipeline, research, sync, transcription, person_data, personal_profile, voice
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 Base.metadata.create_all(bind=engine)
-
-
-def ensure_columns() -> None:
-    """create_all() never alters existing tables; add columns introduced after a database was created."""
-    with engine.begin() as conn:
-        people_columns = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(people)")}
-        if "university" not in people_columns:
-            conn.exec_driver_sql("ALTER TABLE people ADD COLUMN university VARCHAR DEFAULT ''")
-
-
-ensure_columns()
+migrate_schema(engine)
 
 app = FastAPI(title="YourWeb")
 

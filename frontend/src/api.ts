@@ -15,6 +15,8 @@ import type {
   PracticeTurn,
   Meeting,
   MeetingCitation,
+  MutationResult,
+  RankedNode,
   SyncResponse,
 } from "./types"
 
@@ -69,6 +71,10 @@ export function fetchGoalGraph(goalId: string) {
   return request<GraphResponse>(`/goals/${encodeURIComponent(goalId)}/graph`)
 }
 
+export function fetchGoalRecommendations(goalId: string) {
+  return request<{goal_id: string; recommendations: RankedNode[]}>(`/goals/${encodeURIComponent(goalId)}/recommendations`)
+}
+
 export function fetchNetworkTracker() {
   return request<NetworkTracker>("/network/tracker")
 }
@@ -104,7 +110,7 @@ export function extractBrainDump(input: { person_id: string; transcript: string;
 }
 
 export function confirmBrainDump(input: { person_id: string; transcript: string; happened_at?: string; cards: BrainDumpCard[]; introductions: SuggestedIntroduction[] }) {
-  return request<{interaction: InteractionMemory; reminders: Reminder[]; created_people: string[]; spoken_summary: string}>("/brain-dumps/confirm", {
+  return request<{interaction: InteractionMemory; reminders: Reminder[]; created_people: string[]; spoken_summary: string; mutation_result?: MutationResult}>("/brain-dumps/confirm", {
     method: "POST",
     body: JSON.stringify(input),
   })
@@ -182,9 +188,18 @@ export function endMeeting(meetingId: string) {
 }
 
 export function confirmMeeting(meetingId: string, cards: BrainDumpCard[], introductions: SuggestedIntroduction[]) {
-  return request<{meeting: Meeting; reminders: Reminder[]; created_people: string[]}>(`/meetings/${meetingId}/confirm`, {
+  return request<{meeting: Meeting; reminders: Reminder[]; created_people: string[]; mutation_result?: MutationResult}>(`/meetings/${meetingId}/confirm`, {
     method: "POST", body: JSON.stringify({ cards, introductions }),
   })
+}
+
+export function initializeHackmitDemo() {
+  return request<{
+    goal_id: string
+    sarah_id: string
+    maya_id: string
+    transcript: string
+  }>("/sync/hackmit-demo", { method: "POST" })
 }
 
 export function listMeetings(filters: Record<string, string> = {}) {

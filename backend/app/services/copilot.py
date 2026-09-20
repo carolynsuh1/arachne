@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import InteractionMemory, Organization, Person, PersonProfile, Relationship, ResearchBrief
 from ..pipeline.deepgram import to_speakable_text
 from ..pipeline.goal_view import _tokens
+from .relationship_scoring import score_relationship
 
 def build_copilot_turn(db: Session, question: str, history: list[dict], person_ids: list[str] | None = None) -> dict:
     """Answer a question from the graph. With `person_ids`, only those people are considered (a user's own map)."""
@@ -38,8 +39,10 @@ def build_copilot_turn(db: Session, question: str, history: list[dict], person_i
         if edge:
             source = next(p.name for p in selected if p.id == edge.source_id)
             target = next(p.name for p in selected if p.id == edge.target_id)
-            sentence = f"The connection between {source} and {target} is supported by {edge.evidence.rstrip('.').lower()}. "
-            events.append({"type":"edge","edge_id":edge.id,"source":f"person:{edge.source_id}","target":f"person:{edge.target_id}","at_ms":elapsed,"duration_ms":_duration(sentence),"note":edge.evidence})
+            metrics = score_relationship(db, edge)
+            reason = (metrics["explanation"]["relationship_strength"] or [edge.evidence])[0]
+            sentence = f"The connection between {source} and {target} is supported by {edge.evidence.rstrip('.').lower()}. Its current strength is {metrics['relationship_strength']:.0%}, because {reason.lower()}. "
+            events.append({"type":"edge","edge_id":edge.id,"source":f"person:{edge.source_id}","target":f"person:{edge.target_id}","at_ms":elapsed,"duration_ms":_duration(sentence),"note":sentence.strip()})
             text += sentence; elapsed += _duration(sentence); edges.remove(edge)
     return _voice({"answer":text.strip(),"spoken_text":text.strip(),"cited_people":cited,"highlight_events":events})
 

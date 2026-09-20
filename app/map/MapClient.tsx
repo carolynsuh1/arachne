@@ -186,7 +186,12 @@ export default function MapClient({
               <div
                 key={e.id}
                 className={`map-link${citedEdges.has(e.id) ? " map-link-cited" : ""}`}
-                style={lineStyle(a.x, a.y, b.x, b.y)}
+                style={{
+                  ...lineStyle(a.x, a.y, b.x, b.y),
+                  height: `${1 + 4 * (e.relationshipStrength ?? 0.5)}px`,
+                  opacity: 0.35 + 0.65 * (e.confidence ?? 0.5),
+                }}
+                title={e.evidence || e.label}
               />
             );
           })}

@@ -26,6 +26,7 @@ type Props = {
   nodes: GraphNode[]
   edges: GraphEdge[]
   onSelect: (node: GraphNodeData & { id: string }) => void
+  onSelectEdge?: (edge: GraphEdge) => void
   activeNodeId?: string | null
   activeEdgeId?: string | null
   activeNote?: string
@@ -35,6 +36,7 @@ export function RelationshipGraph({
   nodes,
   edges,
   onSelect,
+  onSelectEdge,
   activeNodeId,
   activeEdgeId,
   activeNote,
@@ -61,11 +63,21 @@ export function RelationshipGraph({
         source: edge.source,
         target: edge.target,
         label: edge.label,
+        data: edge.data,
         animated: edge.data.strength >= 0.8 || edge.id === activeEdgeId,
-        style:
-          edge.id === activeEdgeId
-            ? { stroke: "#b45309", strokeWidth: 4 }
-            : undefined,
+        style: {
+          stroke:
+            edge.id === activeEdgeId
+              ? "#b45309"
+              : edge.data.recently_mutated
+                ? "#0369a1"
+                : "#78716c",
+          strokeWidth:
+            edge.id === activeEdgeId
+              ? 5
+              : 1 + 5 * (edge.data.relationship_strength ?? edge.data.strength),
+          opacity: 0.35 + 0.65 * (edge.data.confidence ?? 0.5),
+        },
       })),
     [edges, activeEdgeId],
   )
@@ -91,6 +103,10 @@ export function RelationshipGraph({
         onNodeClick={(_event, node) =>
           onSelect({ id: node.id, ...(node.data as GraphNodeData) })
         }
+        onEdgeClick={(_event, edge) => {
+          const selected = edges.find((item) => item.id === edge.id)
+          if (selected) onSelectEdge?.(selected)
+        }}
       >
         <Background color="#d6d3d1" gap={18} />
         <MiniMap />

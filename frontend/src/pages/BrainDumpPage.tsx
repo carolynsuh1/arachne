@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { confirmBrainDump, extractBrainDump, fetchWhoNext, sendBrainDumpAction } from "../api"
 import { useVoiceCapture } from "../hooks/useVoiceCapture"
-import type { BrainDumpCard, Reminder, SuggestedIntroduction, WhoNext } from "../types"
+import type { BrainDumpCard, MutationResult, Reminder, SuggestedIntroduction, WhoNext } from "../types"
 
 const labels: Record<string, string> = {
   new_information: "New information", topics: "Interests & topics",
@@ -22,6 +22,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
   const [action, setAction] = useState("")
   const [interactionId, setInteractionId] = useState<string>()
   const [error, setError] = useState("")
+  const [mutationResult, setMutationResult] = useState<MutationResult | null>(null)
 
   async function structure() {
     if (!voice.transcript.trim()) return
@@ -41,6 +42,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       const result = await confirmBrainDump({ person_id: person.id, transcript: voice.transcript, cards, introductions })
       setSummary(result.spoken_summary); setReminders(result.reminders)
       setInteractionId(result.interaction.id)
+      setMutationResult(result.mutation_result ?? null)
       setMessage("Memory saved. Profile, graph, and upcoming actions are updated.")
       voice.speakText(result.spoken_summary)
     } catch (reason) {
@@ -96,6 +98,7 @@ export function BrainDumpPage({ person, onDone, onMeeting }: { person: {id: stri
       <button disabled={busy} onClick={() => void confirm()} className="w-full rounded-full bg-stone-900 px-5 py-3 text-white">{busy ? "Saving…" : "Confirm and update my network"}</button>
     </section> : null}
     {reminders.length ? <section className="rounded-2xl bg-stone-900 p-6 text-white"><h2 className="text-3xl">Next Steps · {person.name}</h2>{reminders.map((reminder) => <p key={reminder.id} className="mt-3">✓ {reminder.action} <span className="text-stone-300">→ {reminder.due_at ? new Date(reminder.due_at).toLocaleDateString() : "No date"}</span></p>)}</section> : null}
+    {mutationResult?.recommendations?.length ? <section className="rounded-2xl border border-sky-300 bg-sky-50 p-5"><h2 className="text-2xl">Network replanned</h2>{mutationResult.recommendations.slice(0, 3).map((item) => <p key={item.id} className="mt-2">#{item.rank} {item.name} · {Math.round(item.score * 100)}% {item.change_reason || ""}</p>)}</section> : null}
     {summary ? <section className="rounded-xl border border-stone-300 p-5"><h2 className="text-xl">Agent follow-up</h2><p className="mt-2">{summary}</p><p className="mt-2 text-xs text-stone-500">Spoken through the active Deepgram Voice Agent session.</p>
       {interactionId ? <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input aria-label="Action for agent" value={action} onChange={(event) => setAction(event.target.value)} onKeyDown={(event) => {if (event.key === "Enter") void runAction()}} placeholder='“Yes, remind me Tuesday”' className="min-w-0 flex-1 rounded-full border border-stone-300 px-4 py-2"/><button disabled={busy || !action.trim()} onClick={() => void runAction()} className="rounded-full bg-stone-900 px-5 py-2 text-white disabled:opacity-40">Do it</button></div> : null}
     </section> : null}

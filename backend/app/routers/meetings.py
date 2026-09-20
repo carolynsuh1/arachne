@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import BrainDumpItem, Goal, InteractionMemory, Meeting, Person, Relationship, Reminder
 from ..pipeline.llm import LLMError, call_terra
+from ..services.graph_mutation import apply_confirmed_observation
 from ..schemas import (
     AskMeetingsIn,
     AskMeetingsOut,
@@ -120,6 +121,7 @@ def confirm_meeting(meeting_id: str, payload: MeetingConfirmIn, db: Session = De
     selected = [card for card in payload.cards if card.selected and card.text.strip()]
     people = _people(db, json.loads(meeting.person_ids_json))
     reminders = []
+    memories_by_person: dict[str, InteractionMemory] = {}
     for person in people:
         memory = InteractionMemory(
             id=str(uuid4()), person_id=person.id, person_name=person.name,
@@ -127,6 +129,7 @@ def confirm_meeting(meeting_id: str, payload: MeetingConfirmIn, db: Session = De
         )
         db.add(memory)
         db.flush()
+        memories_by_person[person.id] = memory
         for card in selected:
             db.add(BrainDumpItem(
                 id=str(uuid4()), interaction_id=memory.id, person_id=person.id,
@@ -161,14 +164,53 @@ def confirm_meeting(meeting_id: str, payload: MeetingConfirmIn, db: Session = De
                 target_type="person", target_id=target.id, type="suggested_intro",
                 strength=0.65, evidence=intro.context or f"{source.name} recommended {target.name}.",
             ))
+    mutation_results = []
+    for person in people:
+        memory = memories_by_person[person.id]
+        mutation_results.append(
+            apply_confirmed_observation(
+                db,
+                source_person_id=person.id,
+                transcript=meeting.transcript,
+                cards=[card.model_dump() for card in selected],
+                introductions=(
+                    [item.model_dump() for item in payload.introductions]
+                    if person.id == source.id
+                    else []
+                ),
+                provenance_type="meeting",
+                provenance_id=meeting.id,
+                interaction_id=memory.id,
+                goal_id=meeting.goal_id,
+                happened_at=meeting.started_at,
+            )
+        )
     meeting.status = "confirmed"
     meeting.confirmed_at = datetime.utcnow()
     meeting.cards_json = json.dumps([card.model_dump() for card in payload.cards])
     meeting.introductions_json = json.dumps([item.model_dump() for item in payload.introductions])
     meeting.tags_json = json.dumps(_tags(selected))
     db.commit()
+    interaction_ids = [memory.id for memory in memories_by_person.values()]
+    reminders = (
+        db.query(Reminder)
+        .filter(Reminder.interaction_id.in_(interaction_ids))
+        .order_by(Reminder.created_at)
+        .all()
+    )
     return MeetingConfirmOut(
         meeting=_out(meeting), reminders=reminders, created_people=created_people,
+        mutation_result={
+            "batches": mutation_results,
+            "recommendations": next(
+                (
+                    result["recommendations"]
+                    for result in mutation_results
+                    if result["recommendations"]
+                ),
+                [],
+            ),
+        },
     )
 
 

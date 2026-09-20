@@ -8,6 +8,7 @@ from ..database import get_db
 from ..models import Goal
 from ..pipeline.goal_view import build_goal_view
 from ..schemas import GoalCreate, GoalOut, GraphOut
+from ..services.recommendations import rank_people_for_goal
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -43,3 +44,17 @@ def goal_graph(
     if graph is None:
         raise HTTPException(status_code=404, detail="Goal not found.")
     return graph
+
+
+@router.get("/{goal_id}/recommendations")
+def goal_recommendations(
+    goal_id: str,
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    if db.get(Goal, goal_id) is None:
+        raise HTTPException(status_code=404, detail="Goal not found.")
+    return {
+        "goal_id": goal_id,
+        "recommendations": rank_people_for_goal(db, goal_id)[:limit],
+    }

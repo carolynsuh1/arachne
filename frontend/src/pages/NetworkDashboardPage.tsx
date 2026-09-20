@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { fetchGoalGraph, fetchNetworkTracker, fetchUpcoming, listGoals } from "../api"
+import { fetchGoalGraph, fetchNetworkTracker, fetchUpcoming, initializeHackmitDemo, listGoals } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
 import type {
   Goal,
@@ -11,6 +11,8 @@ import type {
   Reminder,
 } from "../types"
 import { PersonTimeline } from "../components/PersonTimeline"
+import { WhyPanel } from "../components/WhyPanel"
+import type { GraphEdge } from "../types"
 
 type SortKey = "name" | "company" | "location"
 type SortDirection = "asc" | "desc"
@@ -33,6 +35,7 @@ export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Pro
   const [graph, setGraph] = useState<GraphResponse | null>(null)
   const [tracker, setTracker] = useState<NetworkTracker | null>(null)
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(null)
+  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
   const [error, setError] = useState("")
@@ -66,6 +69,27 @@ export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Pro
     setSelectedGoalId(goalId)
     setGraph(null)
     setSelected(null)
+    setSelectedEdge(null)
+  }
+
+  async function loadDemo() {
+    setError("")
+    try {
+      const demo = await initializeHackmitDemo()
+      const [savedGoals, trackerData, graphData] = await Promise.all([
+        listGoals(),
+        fetchNetworkTracker(),
+        fetchGoalGraph(demo.goal_id),
+      ])
+      setGoals(savedGoals)
+      setTracker(trackerData)
+      setSelectedGoalId(demo.goal_id)
+      setGraph(graphData)
+      setSelected(null)
+      setSelectedEdge(null)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not initialize the demo.")
+    }
   }
 
   function sortPeopleBy(key: SortKey) {
@@ -112,6 +136,9 @@ export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Pro
           Pick a saved goal to generate its best people graph, then track where
           your network works, gathers, and lives.
         </p>
+        <button type="button" onClick={() => void loadDemo()} className="mt-4 rounded-full bg-sky-800 px-5 py-2.5 font-sans text-sm text-white">
+          Reset HackMIT embodied-AI demo
+        </button>
       </header>
 
       {error ? <p className="font-sans text-sm text-red-800">{error}</p> : null}
@@ -176,9 +203,20 @@ export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Pro
                 <RelationshipGraph
                   nodes={graph.nodes}
                   edges={graph.edges}
-                  onSelect={setSelected}
+                  onSelect={(node) => { setSelected(node); setSelectedEdge(null) }}
+                  onSelectEdge={(edge) => { setSelectedEdge(edge); setSelected(null) }}
                 />
-                <PersonDetail selected={selected} onResearch={onResearch} onBrainDump={onBrainDump} onMeeting={onMeeting} />
+                <div className="space-y-3">
+                  <ol className="rounded-xl border border-stone-300 bg-white p-4">
+                    {graph.ranked.map((item) => (
+                      <li key={item.id} className="mb-2 flex items-start justify-between gap-2 text-sm last:mb-0">
+                        <span><strong>#{item.rank ?? graph.ranked.indexOf(item) + 1} {item.name}</strong><br/><span className="text-stone-600">{item.change_reason || item.why}</span></span>
+                        <span className="font-sans">{Math.round(item.score * 100)}%{item.rank_delta && item.rank_delta > 0 ? ` ↑${item.rank_delta}` : ""}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <PersonDetail selected={selected} edge={selectedEdge} onResearch={onResearch} onBrainDump={onBrainDump} onMeeting={onMeeting} />
+                </div>
               </div>
             </>
           ) : (
@@ -227,23 +265,22 @@ export function NetworkDashboardPage({ onResearch, onBrainDump, onMeeting }: Pro
 
 function PersonDetail({
   selected,
+  edge,
   onResearch,
   onBrainDump,
   onMeeting,
 }: {
   selected: (GraphNodeData & { id: string }) | null
+  edge: GraphEdge | null
   onResearch: Props["onResearch"]
   onBrainDump: Props["onBrainDump"]
   onMeeting: Props["onMeeting"]
 }) {
   return (
     <aside className="rounded-xl border border-stone-300 bg-white p-4">
-      {selected ? (
+      {edge ? <WhyPanel edge={edge} /> : selected ? (
         <>
-          <h3 className="text-2xl">{selected.name}</h3>
-          <p className="mt-2 font-sans text-sm text-stone-700">
-            {selected.why || selected.bio || "No match explanation yet."}
-          </p>
+          <WhyPanel person={selected} />
           {selected.location ? (
             <p className="mt-3 font-sans text-sm">Location: {selected.location}</p>
           ) : null}

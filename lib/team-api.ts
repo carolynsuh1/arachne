@@ -16,7 +16,21 @@ export class TeamApiError extends Error {
 }
 
 export type TeamPerson = { id: string; name: string; university: string };
-export type TeamGraphEdge = { id: string; source: string; target: string; label: string };
+export type TeamGraphEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  data?: {
+    strength: number;
+    relationship_strength?: number | null;
+    confidence?: number | null;
+    intro_probability?: number | null;
+    last_interaction_at?: string | null;
+    interaction_count?: number;
+    evidence?: string;
+  };
+};
 export type TeamGraph = { nodes: { id: string }[]; edges: TeamGraphEdge[] };
 
 function baseUrl() {
@@ -66,7 +80,19 @@ export type GoalPlan = {
   /** "openai" when a key is configured on the backend, otherwise "heuristic". */
   provider: string;
 };
-export type RankedPerson = { id: string; name: string; score: number; why: string };
+export type RankedPerson = {
+  id: string;
+  name: string;
+  score: number;
+  why: string;
+  goal_relevance?: number | null;
+  relationship_strength?: number | null;
+  intro_probability?: number | null;
+  score_delta?: number | null;
+  rank_delta?: number | null;
+  change_reason?: string | null;
+  next_action?: string | null;
+};
 export type GoalGraph = {
   nodes: { id: string; data: { name: string; location?: string | null; companies?: string[] } }[];
   ranked: RankedPerson[];

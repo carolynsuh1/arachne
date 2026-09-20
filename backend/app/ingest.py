@@ -11,7 +11,16 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from .models import Organization, Person, PersonProfile, Relationship, SyncState
+from .models import (
+    GraphEvidence,
+    GraphMutation,
+    Organization,
+    Person,
+    PersonProfile,
+    RecommendationSnapshot,
+    Relationship,
+    SyncState,
+)
 
 
 class NetworkNotEmpty(Exception):
@@ -50,6 +59,9 @@ def replace_network(
             "SQLite already has network rows. Refusing to overwrite an existing network."
         )
 
+    db.query(RecommendationSnapshot).delete()
+    db.query(GraphMutation).delete()
+    db.query(GraphEvidence).delete()
     db.query(Relationship).delete()
     db.query(PersonProfile).delete()
     db.query(Person).delete()
@@ -83,18 +95,35 @@ def replace_network(
         )
 
     for rel in payload.get("relationships", []):
-        db.add(
-            Relationship(
-                id=str(rel["id"]),
-                source_type=rel["source_type"],
-                source_id=str(rel["source_id"]),
-                target_type=rel["target_type"],
-                target_id=str(rel["target_id"]),
-                type=rel["type"],
-                strength=float(rel.get("strength") or 0.5),
-                evidence=rel.get("evidence") or "",
-            )
+        relationship = Relationship(
+            id=str(rel["id"]),
+            source_type=rel["source_type"],
+            source_id=str(rel["source_id"]),
+            target_type=rel["target_type"],
+            target_id=str(rel["target_id"]),
+            type=rel["type"],
+            strength=float(rel.get("strength") or 0.5),
+            relationship_strength=float(
+                rel.get("relationship_strength", rel.get("strength") or 0.5)
+            ),
+            confidence=float(rel.get("confidence") or 0.25),
+            intro_probability=float(rel.get("intro_probability") or 0.0),
+            evidence=rel.get("evidence") or "",
         )
+        db.add(relationship)
+        if relationship.evidence:
+            db.add(
+                GraphEvidence(
+                    id=f"legacy-{relationship.id}",
+                    entity_type="relationship",
+                    entity_id=relationship.id,
+                    evidence_type="seed",
+                    evidence_id=relationship.id,
+                    event_type="observation",
+                    excerpt=relationship.evidence,
+                    confidence=0.5,
+                )
+            )
 
     state = db.get(SyncState, 1)
     now = datetime.now(timezone.utc).replace(tzinfo=None)

@@ -50,6 +50,20 @@ class GraphNodeData(BaseModel):
     companies: list[str] = []
     affiliations: list[str] = []
     suggested: bool = False
+    goal_relevance: float | None = None
+    relationship_strength: float | None = None
+    confidence: float | None = None
+    intro_probability: float | None = None
+    last_interaction_at: datetime | None = None
+    interaction_count: int = 0
+    rank: int | None = None
+    previous_rank: int | None = None
+    score_delta: float | None = None
+    rank_delta: int | None = None
+    change_reason: str | None = None
+    next_action: str | None = None
+    score_explanation: dict[str, list[str]] = {}
+    recently_mutated: bool = False
 
 
 class GraphNode(BaseModel):
@@ -63,6 +77,14 @@ class GraphEdgeData(BaseModel):
     type: str
     strength: float
     evidence: str
+    relationship_strength: float | None = None
+    confidence: float | None = None
+    intro_probability: float | None = None
+    last_interaction_at: datetime | None = None
+    interaction_count: int = 0
+    structured_evidence: list[dict] = []
+    score_explanation: dict[str, list[str]] = {}
+    recently_mutated: bool = False
 
 
 class GraphEdge(BaseModel):
@@ -79,6 +101,17 @@ class RankedNode(BaseModel):
     kind: str
     score: float
     why: str
+    goal_relevance: float | None = None
+    relationship_strength: float | None = None
+    confidence: float | None = None
+    intro_probability: float | None = None
+    rank: int | None = None
+    previous_rank: int | None = None
+    score_delta: float | None = None
+    rank_delta: int | None = None
+    change_reason: str | None = None
+    next_action: str | None = None
+    explanation: list[str] = []
 
 
 class GraphOut(BaseModel):
@@ -213,6 +246,7 @@ class BrainDumpConfirmOut(BaseModel):
     reminders: list[ReminderOut]
     created_people: list[str]
     spoken_summary: str
+    mutation_result: dict | None = None
 
 
 class ReminderCreate(BaseModel):
@@ -288,6 +322,7 @@ class MeetingConfirmOut(BaseModel):
     meeting: MeetingOut
     reminders: list[ReminderOut]
     created_people: list[str]
+    mutation_result: dict | None = None
 
 
 class AskMeetingsIn(BaseModel):

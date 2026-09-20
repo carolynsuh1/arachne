@@ -3,7 +3,19 @@ import { withBackendGoal } from "@/lib/goal";
 import { TeamApiError, getGoalGraph, getGoalPlan, getTracker, teamHealthy, type GoalPlan } from "@/lib/team-api";
 
 export type Group = { name: string; count: number; people: string[] };
-export type GoalMatch = { personId: string; score: number; pct: number; why: string };
+export type GoalMatch = {
+  personId: string;
+  score: number;
+  pct: number;
+  why: string;
+  goalRelevance?: number | null;
+  relationshipStrength?: number | null;
+  introProbability?: number | null;
+  scoreDelta?: number | null;
+  rankDelta?: number | null;
+  changeReason?: string | null;
+  nextAction?: string | null;
+};
 export type GoalViewData = {
   online: boolean;
   hasGoal: boolean;
@@ -73,7 +85,21 @@ export async function getGoalView(userId: string): Promise<GoalViewData> {
     const maxScore = Math.max(0, ...result.graph.ranked.map((r) => r.score));
     view.matches = result.graph.ranked.flatMap((r) => {
       const personId = localByBackend.get(r.id);
-      return personId ? [{ personId, score: r.score, pct: maxScore > 0 ? r.score / maxScore : 0, why: r.why }] : [];
+      return personId
+        ? [{
+            personId,
+            score: r.score,
+            pct: maxScore > 0 ? r.score / maxScore : 0,
+            why: r.why,
+            goalRelevance: r.goal_relevance,
+            relationshipStrength: r.relationship_strength,
+            introProbability: r.intro_probability,
+            scoreDelta: r.score_delta,
+            rankDelta: r.rank_delta,
+            changeReason: r.change_reason,
+            nextAction: r.next_action,
+          }]
+        : [];
     });
 
     const mine = new Set(ids);

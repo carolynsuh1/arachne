@@ -16,6 +16,7 @@ from ..schemas import (
     TrackerGroupOut,
     TrackerPersonOut,
 )
+from ..services.relationship_scoring import recency_score, score_person_connection
 
 router = APIRouter(prefix="/network", tags=["network"])
 
@@ -77,7 +78,6 @@ def search_network(payload: NetworkSearchIn, db: Session = Depends(get_db)):
     people = {person.id: person for person in db.query(Person).all()}
     organizations = {org.id: org for org in db.query(Organization).all()}
     relationships = db.query(Relationship).all()
-    latest_interactions = _latest_interactions(db)
     candidates: dict[str, dict[str, object]] = {}
     max_retrieval_score = max((float(item.get("score", 0)) for item in retrieved), default=0.0)
 
@@ -105,12 +105,13 @@ def search_network(payload: NetworkSearchIn, db: Session = Depends(get_db)):
     results: list[NetworkSearchResult] = []
     for person_id, candidate in candidates.items():
         person = people[person_id]
-        related = [rel for rel in relationships if _relationship_has_person(rel, person_id)]
-        relationship_strength = max((max(0.0, min(1.0, rel.strength)) for rel in related), default=0.0)
-        last_interaction = latest_interactions.get(person_id)
-        recency_score = _recency_score(last_interaction, reconnecting)
+        connection = score_person_connection(db, person_id)
+        relationship_strength = connection["relationship_strength"]
+        last_interaction = connection["last_interaction_at"]
+        freshness = recency_score(last_interaction)
+        recency_value = 1 - freshness if reconnecting else freshness
         semantic_score = float(candidate["semantic"])
-        score = round(100 * (semantic_score * 0.70 + relationship_strength * 0.20 + recency_score * 0.10), 1)
+        score = round(100 * (semantic_score * 0.70 + relationship_strength * 0.20 + recency_value * 0.10), 1)
         evidence = list(candidate["evidence"])
         if relationship_strength:
             evidence.append(f"strongest relationship signal {relationship_strength:.0%}")
@@ -127,7 +128,7 @@ def search_network(payload: NetworkSearchIn, db: Session = Depends(get_db)):
             score=score,
             semantic_score=round(semantic_score, 3),
             relationship_strength=round(relationship_strength, 3),
-            recency_score=round(recency_score, 3),
+            recency_score=round(recency_value, 3),
             why=why,
             suggested_action=_suggested_action(person.name, query),
             last_interaction_at=last_interaction,

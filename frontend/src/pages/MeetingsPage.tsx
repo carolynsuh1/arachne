@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   askMeetings, confirmMeeting, endMeeting, fetchNetworkTracker, ingestMeetingTranscript,
-  listGoals, listMeetings, sendBrainDumpAction, setMeetingPaused, startMeeting,
+  initializeHackmitDemo, listGoals, listMeetings, sendBrainDumpAction, setMeetingPaused, startMeeting,
 } from "../api"
 import { useVoiceCapture } from "../hooks/useVoiceCapture"
 import type {
-  BrainDumpCard, Goal, Meeting, MeetingCitation, Reminder, SuggestedIntroduction, TrackerPerson,
+  BrainDumpCard, Goal, Meeting, MeetingCitation, MutationResult, Reminder, SuggestedIntroduction, TrackerPerson,
 } from "../types"
 
 const labels: Record<string, string> = {
@@ -41,6 +41,8 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
   const [citations, setCitations] = useState<MeetingCitation[]>([])
   const [action, setAction] = useState("")
   const [openDetail, setOpenDetail] = useState<Meeting | null>(null)
+  const [mutationResult, setMutationResult] = useState<MutationResult | null>(null)
+  const [demoMessage, setDemoMessage] = useState("")
   const activeId = active?.id
   const activeStatus = active?.status
 
@@ -113,9 +115,27 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
     try {
       const result = await confirmMeeting(active.id, cards, introductions)
       setActive(result.meeting); setReminders(result.reminders)
+      setMutationResult(result.mutation_result ?? null)
       setMeetings(await listMeetings())
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save meeting memory.") }
     finally { setBusy(false) }
+  }
+
+  async function loadDemo() {
+    setBusy(true); setError("")
+    try {
+      const demo = await initializeHackmitDemo()
+      const [network, savedGoals] = await Promise.all([fetchNetworkTracker(), listGoals()])
+      setPeople(network.people)
+      setGoals(savedGoals)
+      setSelectedPeople([demo.sarah_id])
+      setGoalId(demo.goal_id)
+      voice.setTranscript(demo.transcript)
+      setMeetingType("coffee_chat")
+      setDemoMessage("Demo loaded. Start the meeting, then End Meeting and confirm the extracted observations.")
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not load the demo.")
+    } finally { setBusy(false) }
   }
 
   async function askMemory() {
@@ -195,11 +215,21 @@ export function MeetingsPage({ initialPerson, onClearPerson }: {
     {active?.status === "confirmed" ? <section className="rounded-2xl bg-stone-900 p-6 text-white">
       <h2 className="text-3xl">Memory saved</h2><p className="mt-2">Profiles, relationship history, suggested introductions, and Upcoming now use this meeting.</p>
       {reminders.map((reminder) => <p key={reminder.id} className="mt-2">✓ {reminder.action}</p>)}
+      {mutationResult?.recommendations?.length ? <div className="mt-5 rounded-xl bg-white/10 p-4">
+        <h3 className="text-xl">Graph replanned</h3>
+        {mutationResult.recommendations.slice(0, 3).map((item) => <p key={item.id} className="mt-2">
+          #{item.rank} {item.name} · {Math.round(item.score * 100)}%
+          {item.change_reason ? ` — ${item.change_reason}` : ""}
+        </p>)}
+      </div> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input value={action} onChange={(event) => setAction(event.target.value)} placeholder='“Remind me Tuesday”' className="flex-1 rounded-full px-4 py-2 text-stone-900"/><button onClick={() => void followUp()} className="rounded-full bg-white px-5 py-2 text-stone-900">Add spoken follow-up</button></div>
       <button onClick={() => {setActive(null); voice.setTranscript(""); setCards([])}} className="mt-4 underline">Return to meetings</button>
     </section> : null}
     {!active ? <section className="rounded-2xl border border-stone-300 bg-white p-5 sm:p-7">
-      <h2 className="text-3xl">New Meeting</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-3xl">New Meeting</h2>
+        <button type="button" disabled={busy} onClick={() => void loadDemo()} className="rounded-full bg-sky-800 px-4 py-2 text-sm text-white">Load HackMIT demo meeting</button>
+      </div>
+      {demoMessage ? <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm text-sky-900">{demoMessage}</p> : null}
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         <label className="md:col-span-2">People <select multiple value={selectedPeople} onChange={(event) => setSelectedPeople(Array.from(event.target.selectedOptions, (option) => option.value))} className="mt-2 h-28 w-full rounded-lg border border-stone-300 p-2">{people.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select><span className="text-xs text-stone-500">Hold Cmd/Ctrl to select multiple people.</span></label>
         <div className="space-y-3"><label className="block">Meeting type<select value={meetingType} onChange={(event) => setMeetingType(event.target.value)} className="mt-2 w-full rounded-lg border border-stone-300 p-2">{["coffee_chat","networking","mentor","club","professional_call","other"].map((value) => <option key={value} value={value}>{value.replace("_", " ")}</option>)}</select></label>

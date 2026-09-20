@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, String, Text
+from sqlalchemy import DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -62,6 +62,64 @@ class Relationship(Base):
     type: Mapped[str] = mapped_column(String, nullable=False)
     strength: Mapped[float] = mapped_column(Float, default=0.5)
     evidence: Mapped[str] = mapped_column(Text, default="")
+    relationship_strength: Mapped[float] = mapped_column(Float, default=0.5)
+    confidence: Mapped[float] = mapped_column(Float, default=0.25)
+    last_interaction_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    interaction_count: Mapped[int] = mapped_column(Integer, default=0)
+    intro_probability: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class GraphEvidence(Base):
+    """Append-only reason that Arachne believes an entity or edge fact."""
+
+    __tablename__ = "graph_evidence"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    entity_type: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    entity_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    evidence_type: Mapped[str] = mapped_column(String, nullable=False)
+    evidence_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String, default="observation")
+    excerpt: Mapped[str] = mapped_column(Text, default="")
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class GraphMutation(Base):
+    """Append-only audit record for a confirmed graph state transition."""
+
+    __tablename__ = "graph_mutations"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    batch_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    operation: Mapped[str] = mapped_column(String, nullable=False)
+    entity_type: Mapped[str] = mapped_column(String, nullable=False)
+    entity_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    provenance_type: Mapped[str] = mapped_column(String, nullable=False)
+    provenance_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    payload_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class RecommendationSnapshot(Base):
+    """One person's score at a point in a goal-conditioned ranking."""
+
+    __tablename__ = "recommendation_snapshots"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    batch_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    goal_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    reasons_json: Mapped[str] = mapped_column(Text, default="[]")
+    next_action: Mapped[str] = mapped_column(Text, default="")
+    source_type: Mapped[str] = mapped_column(String, default="")
+    source_id: Mapped[str] = mapped_column(String, default="", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 class SyncState(Base):

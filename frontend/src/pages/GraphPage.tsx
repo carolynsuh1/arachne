@@ -3,6 +3,8 @@ import { fetchGraph } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
 import type { GraphNodeData, GraphResponse } from "../types"
 import { PersonTimeline } from "../components/PersonTimeline"
+import { WhyPanel } from "../components/WhyPanel"
+import type { GraphEdge } from "../types"
 
 export function GraphPage({
   onResearch,
@@ -19,6 +21,7 @@ export function GraphPage({
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(
     null,
   )
+  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null)
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -52,7 +55,8 @@ export function GraphPage({
           <RelationshipGraph
             nodes={graph.nodes}
             edges={graph.edges}
-            onSelect={setSelected}
+            onSelect={(node) => { setSelected(node); setSelectedEdge(null) }}
+            onSelectEdge={(edge) => { setSelectedEdge(edge); setSelected(null) }}
           />
         ) : (
           <div className="flex h-[70vh] items-center justify-center rounded-xl border border-dashed border-stone-400">
@@ -60,15 +64,11 @@ export function GraphPage({
           </div>
         )}
         <aside className="rounded-xl border border-stone-300 bg-white p-4">
-          {selected ? (
+          {selectedEdge ? (
+            <WhyPanel edge={selectedEdge} />
+          ) : selected ? (
             <>
-              <p className="font-sans text-xs tracking-wide text-stone-500 uppercase">
-                {selected.kind}
-              </p>
-              <h2 className="mt-1 text-2xl">{selected.name}</h2>
-              <p className="mt-3 text-sm text-stone-700">
-                {selected.bio || selected.description || "No description yet."}
-              </p>
+              <WhyPanel person={selected} />
               {selected.kind === "person" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button

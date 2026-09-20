@@ -2,7 +2,17 @@ import { prisma } from "@/lib/db";
 import { getTeamGraph, teamHealthy } from "@/lib/team-api";
 
 export type MapPerson = { id: string; name: string; university: string; synced: boolean };
-export type MapEdge = { id: string; source: string; target: string; label: string };
+export type MapEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  relationshipStrength?: number;
+  confidence?: number;
+  introProbability?: number;
+  lastInteractionAt?: string | null;
+  evidence?: string;
+};
 export type UserNetwork = { people: MapPerson[]; edges: MapEdge[]; online: boolean };
 
 export const toMapPerson = (p: { id: string; name: string; university: string; backendPersonId: string | null }): MapPerson => ({
@@ -37,7 +47,19 @@ export async function getUserNetwork(userId: string): Promise<UserNetwork> {
     const edges = graph.edges.flatMap((e) => {
       const source = localByBackendNode.get(e.source);
       const target = localByBackendNode.get(e.target);
-      return source && target ? [{ id: e.id, source, target, label: e.label }] : [];
+      return source && target
+        ? [{
+            id: e.id,
+            source,
+            target,
+            label: e.label,
+            relationshipStrength: e.data?.relationship_strength ?? e.data?.strength,
+            confidence: e.data?.confidence ?? undefined,
+            introProbability: e.data?.intro_probability ?? undefined,
+            lastInteractionAt: e.data?.last_interaction_at,
+            evidence: e.data?.evidence,
+          }]
+        : [];
     });
     return { people, edges, online };
   } catch {

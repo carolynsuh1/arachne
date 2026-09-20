@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import FollowUpState, BrainDumpItem, Goal, InteractionMemory, Person, Relationship, Reminder
 from ..pipeline.llm import LLMError, call_terra, parse_json_object
+from ..services.graph_mutation import apply_confirmed_observation
 from ..schemas import (
     BrainDumpCard,
     BrainDumpActionIn,
@@ -96,14 +97,31 @@ def confirm_brain_dump(payload: BrainDumpConfirmIn, db: Session = Depends(get_db
                 target_type="person", target_id=target.id, type="suggested_intro",
                 strength=0.65, evidence=intro.context or f"{person.name} recommended introduction.",
             ))
+    goal = db.query(Goal).order_by(Goal.created_at.desc()).first()
+    mutation_result = apply_confirmed_observation(
+        db,
+        source_person_id=person.id,
+        transcript=payload.transcript,
+        cards=[card.model_dump() for card in selected],
+        introductions=[item.model_dump() for item in payload.introductions],
+        provenance_type="interaction",
+        provenance_id=memory.id,
+        interaction_id=memory.id,
+        goal_id=goal.id if goal else None,
+        happened_at=happened_at,
+    )
     db.commit()
     db.refresh(memory)
-    for reminder in reminders:
-        db.refresh(reminder)
+    reminders = (
+        db.query(Reminder)
+        .filter(Reminder.interaction_id == memory.id)
+        .order_by(Reminder.created_at)
+        .all()
+    )
     summary = _summary(person.name, selected, payload.introductions)
     return BrainDumpConfirmOut(
         interaction=memory, reminders=reminders, created_people=created_people,
-        spoken_summary=summary,
+        spoken_summary=summary, mutation_result=mutation_result,
     )
 
 
@@ -163,7 +181,9 @@ def who_next(limit: int = Query(3, ge=1, le=5), db: Session = Depends(get_db)):
     people = {person.id: person for person in db.query(Person).all()}
     results: list[WhoNextOut] = []
     seen: set[str] = set()
-    for rel in db.query(Relationship).filter(Relationship.type == "suggested_intro").all():
+    for rel in db.query(Relationship).filter(
+        Relationship.type.in_(["suggested_intro", "offered_intro"])
+    ).all():
         source, target = people.get(rel.source_id), people.get(rel.target_id)
         if not source or not target or target.id in seen:
             continue

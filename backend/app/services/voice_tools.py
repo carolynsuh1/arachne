@@ -9,6 +9,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from ..models import Goal, InteractionMemory, Meeting, Person, Relationship, Reminder
+from .relationship_scoring import score_relationship
 
 
 def run_voice_tool(
@@ -61,6 +62,18 @@ def run_voice_tool(
                 "target": people.get(row.target_id, row.target_id),
                 "type": row.type,
                 "evidence": row.evidence,
+                **{
+                    key: value
+                    for key, value in score_relationship(db, row).items()
+                    if key in {
+                        "relationship_strength",
+                        "confidence",
+                        "intro_probability",
+                        "last_interaction_days",
+                        "interaction_count",
+                        "explanation",
+                    }
+                },
             }
             for row in rows[:8]
         ]}

@@ -38,6 +38,20 @@ export type GraphNodeData = {
   companies?: string[]
   affiliations?: string[]
   suggested?: boolean
+  goal_relevance?: number | null
+  relationship_strength?: number | null
+  confidence?: number | null
+  intro_probability?: number | null
+  last_interaction_at?: string | null
+  interaction_count?: number
+  rank?: number | null
+  previous_rank?: number | null
+  score_delta?: number | null
+  rank_delta?: number | null
+  change_reason?: string | null
+  next_action?: string | null
+  score_explanation?: Record<string, string[]>
+  recently_mutated?: boolean
 }
 
 export type GraphNode = {
@@ -56,7 +70,22 @@ export type GraphEdge = {
     type: string
     strength: number
     evidence: string
+    relationship_strength?: number | null
+    confidence?: number | null
+    intro_probability?: number | null
+    last_interaction_at?: string | null
+    interaction_count?: number
+    structured_evidence?: EvidenceReference[]
+    score_explanation?: Record<string, string[]>
+    recently_mutated?: boolean
   }
+}
+
+export type EvidenceReference = {
+  type: string
+  id: string
+  event_type?: string
+  excerpt?: string
 }
 
 export type RankedNode = {
@@ -65,6 +94,35 @@ export type RankedNode = {
   kind: string
   score: number
   why: string
+  goal_relevance?: number | null
+  relationship_strength?: number | null
+  confidence?: number | null
+  intro_probability?: number | null
+  rank?: number | null
+  previous_rank?: number | null
+  score_delta?: number | null
+  rank_delta?: number | null
+  change_reason?: string | null
+  next_action?: string | null
+  explanation?: string[]
+}
+
+export type MutationResult = {
+  batch_id?: string
+  batches?: MutationResult[]
+  mutations?: {
+    id: string
+    operation: string
+    entity_type: string
+    entity_id: string
+    provenance_type: string
+    provenance_id: string
+    payload: Record<string, unknown>
+  }[]
+  affected_relationship_ids?: string[]
+  created_people?: string[]
+  recommendations?: RankedNode[]
+  idempotent?: boolean
 }
 
 export type GraphResponse = {

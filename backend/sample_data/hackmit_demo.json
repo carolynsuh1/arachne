@@ -1,0 +1,45 @@
+{
+  "goal": {
+    "id": "demo-goal-embodied-ai",
+    "text": "Get involved in embodied AI research.",
+    "summary": "Find a reachable path into embodied AI and robotics research.",
+    "subgoals": [
+      {
+        "text": "Meet someone working on robot manipulation models.",
+        "why": "A domain expert can point to a concrete research entry point."
+      }
+    ],
+    "needed_connections": [
+      {
+        "kind": "embodied AI researcher",
+        "query": "robot manipulation embodied AI researcher",
+        "why": "They can recommend projects, papers, and labs."
+      }
+    ]
+  },
+  "people": [
+    {
+      "id": "demo-sarah",
+      "name": "Sarah Kim",
+      "bio": "Robotics researcher and a trusted contact.",
+      "interests": ["robotics", "robot learning"],
+      "skills": ["research introductions"]
+    },
+    {
+      "id": "demo-maya",
+      "name": "Maya Chen",
+      "bio": "Embodied AI researcher working on manipulation models.",
+      "interests": ["embodied AI", "robot manipulation"],
+      "skills": ["manipulation models", "robot learning"]
+    }
+  ],
+  "relationship": {
+    "id": "demo-sarah-maya",
+    "source_id": "demo-sarah",
+    "target_id": "demo-maya",
+    "type": "knows",
+    "strength": 0.2,
+    "evidence": "Sarah and Maya are friends, but no introduction has been offered yet."
+  },
+  "transcript": "I'm not doing robotics anymore, but my friend Maya works on manipulation models. You should talk to her. I can introduce you—send me a message tomorrow."
+}
