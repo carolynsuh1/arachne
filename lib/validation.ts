@@ -53,6 +53,13 @@ export const practiceTurnSchema = z.object({
 });
 export const feedbackSchema = z.object({ transcript: z.array(chatMessage).min(1).max(60) });
 
+export const askSchema = z.object({
+  question: z.string().trim().min(1, "Ask a question first.").max(2000, "Keep it under 2000 characters."),
+  history: z.array(chatMessage).max(20),
+  // "map": only the people on this user's map. "network": everyone in the shared team network.
+  scope: z.enum(["map", "network"]).default("map"),
+});
+
 export const researchSchema = z.object({
   // Optional: pick a specific public profile when the first search returned several candidates.
   profileUrl: z

@@ -176,6 +176,23 @@ export const confirmBrainDump = (input: {
     body: JSON.stringify(input),
   });
 
+// ---- Phase 4: ask your network ----
+
+export type CopilotTurn = {
+  answer: string;
+  spoken_text: string;
+  cited_people: { id: string; node_id: string; name: string }[];
+  /** node/edge highlights in the order the answer mentions them; edge_id is a relationship id. */
+  highlight_events: { type: "node" | "edge"; node_id?: string; edge_id?: string }[];
+};
+
+/** Rule-based (no API key needed). With personIds, only those people are considered. */
+export const askCopilot = (input: { question: string; history: Chat[]; personIds?: string[] }) =>
+  teamFetch<CopilotTurn>("/copilot/turn", {
+    method: "POST",
+    body: JSON.stringify({ question: input.question, history: input.history, person_ids: input.personIds }),
+  });
+
 export const listFollowUps = () => teamFetch<FollowUp[]>("/follow-ups");
 
 export const updateFollowUp = (reminderId: string, input: { action: string; days: number }) =>

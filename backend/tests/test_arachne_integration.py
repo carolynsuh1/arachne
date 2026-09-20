@@ -10,7 +10,8 @@ from sqlalchemy.pool import StaticPool
 from app.agents.knowledge_graph import build_graph
 from app.database import Base, get_db
 from app.internal_key import install_internal_key_guard
-from app.models import Goal, Person
+from app.models import Goal, Person, Relationship
+from app.routers.copilot import router as copilot_router
 from app.routers.goals import router as goals_router
 from app.routers.person_data import router
 
@@ -111,6 +112,65 @@ class GoalViewForOnePersonsMapTests(unittest.TestCase):
         ranked = self.client.get("/goals/g1/graph").json()["ranked"]
         self.assertEqual(ranked[0]["id"] in {"a", "d"}, True)
         self.assertLessEqual(len(ranked), 6)
+
+
+class CopilotScopedToOnePersonsMapTests(unittest.TestCase):
+    """POST /copilot/turn with person_ids only considers those people (a user's own map)."""
+
+    def setUp(self):
+        self.engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
+        with self.Session() as db:
+            db.add_all(
+                [
+                    Person(id="a", name="Ada Chen", university="UC Berkeley", bio="Robotics researcher exploring AI agents."),
+                    Person(id="b", name="Bo Newcomer", university="UC Berkeley"),  # added by name + university only
+                    Person(id="c", name="Cy Elsewhere", bio="Robotics and AI agents expert, not on this map."),
+                    Relationship(id="r-ab", source_type="person", source_id="a", target_type="person", target_id="b",
+                                 type="knows", strength=0.8, evidence="Ada mentors Bo."),
+                ]
+            )
+            db.commit()
+        app = FastAPI()
+        app.include_router(copilot_router)
+
+        def dependency():
+            with self.Session() as db:
+                yield db
+
+        app.dependency_overrides[get_db] = dependency
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        self.client.close()
+        self.engine.dispose()
+
+    def ask(self, **extra):
+        return self.client.post("/copilot/turn", json={"question": "Who can help me with robotics and AI agents?", **extra})
+
+    def test_without_person_ids_the_whole_network_is_considered(self):
+        cited = {p["id"] for p in self.ask().json()["cited_people"]}
+        self.assertIn("c", cited)
+
+    def test_with_person_ids_only_those_people_can_be_cited(self):
+        body = self.ask(person_ids=["a", "b"]).json()
+        cited = {p["id"] for p in body["cited_people"]}
+        self.assertTrue(cited <= {"a", "b"})
+        self.assertIn("a", cited)
+        self.assertNotIn("Cy Elsewhere", body["answer"])
+        # the relationship between two people on the map is still highlighted
+        self.assertTrue(any(e.get("edge_id") == "r-ab" for e in body["highlight_events"] if e["type"] == "edge"))
+
+    def test_people_without_a_bio_get_a_real_sentence_not_an_empty_one(self):
+        body = self.ask(person_ids=["b"]).json()
+        self.assertIn("Bo Newcomer is at UC Berkeley", body["answer"])
+        self.assertNotIn(". .", body["answer"])
+        self.assertNotIn("exploring ,", body["answer"])
+
+    def test_empty_scope_says_the_network_is_empty_and_ids_are_capped(self):
+        self.assertEqual(self.ask(person_ids=[]).json()["cited_people"], [])
+        self.assertEqual(self.ask(person_ids=[str(i) for i in range(101)]).status_code, 422)
 
 
 class InternalKeyTests(unittest.TestCase):

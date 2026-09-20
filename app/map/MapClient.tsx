@@ -5,6 +5,7 @@ import { postJson } from "@/components/api";
 import { GLOBAL_FEATURES } from "@/lib/features";
 import type { GoalViewData } from "@/lib/goal-view";
 import type { MapEdge, MapPerson, UserNetwork } from "@/lib/network";
+import { EMPTY_ASK, type AskState } from "./AskPanel";
 import SidePanel, { type PanelView } from "./SidePanel";
 
 const RING_STEP = 110;
@@ -61,6 +62,7 @@ export default function MapClient({
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<PanelView | null>(null);
   const [goalView, setGoalView] = useState<GoalViewData | null>(null);
+  const [ask, setAsk] = useState<AskState>(EMPTY_ASK);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +104,12 @@ export default function MapClient({
   const strongMatchIds = new Set(
     (goalView?.matches ?? []).filter((m) => m.score > 0).slice(0, 3).map((m) => m.personId),
   );
+
+  // While "Ask your network" is open, the people and relationships the latest answer cited glow on the map.
+  const askOpen = panel?.kind === "feature" && panel.feature.id === "ask";
+  const latestAnswer = [...ask.messages].reverse().find((m) => m.role === "assistant");
+  const citedIds = new Set(askOpen ? (latestAnswer?.cited ?? []).flatMap((c) => (c.localId ? [c.localId] : [])) : []);
+  const citedEdges = new Set(askOpen ? (latestAnswer?.edgeIds ?? []) : []);
 
   function personUpdated(p: MapPerson) {
     setPeople((prev) => prev.map((x) => (x.id === p.id ? p : x)));
@@ -174,7 +182,13 @@ export default function MapClient({
             const a = spot.get(e.source);
             const b = spot.get(e.target);
             if (!a || !b) return null;
-            return <div key={e.id} className="map-link" style={lineStyle(a.x, a.y, b.x, b.y)} />;
+            return (
+              <div
+                key={e.id}
+                className={`map-link${citedEdges.has(e.id) ? " map-link-cited" : ""}`}
+                style={lineStyle(a.x, a.y, b.x, b.y)}
+              />
+            );
           })}
 
           <div className="node node-me" style={{ left: "50%", top: "50%" }}>
@@ -193,7 +207,7 @@ export default function MapClient({
               <button
                 key={p.id}
                 type="button"
-                className={`node node-person node-new${matchClass}${panel && "person" in panel && panel.person?.id === p.id ? " node-selected" : ""}`}
+                className={`node node-person node-new${matchClass}${citedIds.has(p.id) ? " node-cited" : ""}${panel && "person" in panel && panel.person?.id === p.id ? " node-selected" : ""}`}
                 style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
                 onClick={() => setPanel({ kind: "person", person: p })}
                 title={match && match.score > 0 ? `Goal match: ${match.why}` : undefined}
@@ -236,6 +250,9 @@ export default function MapClient({
           people={people}
           onAdded={addedPerson}
           onPersonUpdated={personUpdated}
+          ask={ask}
+          onAskChange={setAsk}
+          goal={goal}
         />
       )}
 

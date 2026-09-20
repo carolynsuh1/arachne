@@ -13,6 +13,8 @@ class Message(BaseModel):
 class CopilotTurn(BaseModel):
     question: str = Field(min_length=1,max_length=2_000)
     history: list[Message] = Field(default_factory=list,max_length=20)
+    # Optional: only consider these people (e.g. one user's own map inside the shared network).
+    person_ids: list[str] | None = Field(default=None,max_length=100)
 class PracticeTurn(BaseModel):
     person_id: str
     message: str = Field(min_length=1,max_length=2_000)
@@ -23,7 +25,7 @@ class FeedbackRequest(BaseModel):
 
 @router.post("/turn")
 def copilot_turn(payload: CopilotTurn, db: Session=Depends(get_db)):
-    return build_copilot_turn(db,payload.question.strip(),[m.model_dump() for m in payload.history])
+    return build_copilot_turn(db,payload.question.strip(),[m.model_dump() for m in payload.history],payload.person_ids)
 @router.post("/practice/turn")
 def practice_turn(payload: PracticeTurn, db: Session=Depends(get_db)):
     result=build_practice_turn(db,payload.person_id,payload.message.strip(),[m.model_dump() for m in payload.history])

@@ -92,8 +92,14 @@ Click a person → panel → action. Every per-person route checks that the call
   - *Log a meeting* stays a placeholder (phase 5).
 - **Cost/safety notes:** Brain dump confirm writes to the shared network (notes on the person; new people only if ticked). The optional research service is started with `npm run dev:all -- --research` and is non-critical: it exiting does not stop the web app or API.
 
-### Phase 4: Ask your network
-- **Ask your network** → `POST /copilot/turn` with history; chat panel; cite people as clickable chips that select the node.
+### Phase 4: Ask your network: DONE
+- **Ask your network** opens a chat (`POST /api/net/ask` → backend `POST /copilot/turn`). The copilot is rule-based, so it needs **no API keys** and costs nothing. The conversation (last 20 messages) is sent as history and lives in the map, so it survives opening a person and coming back.
+- **Scope, chosen in the panel.** *People on my map* (default) only considers this user's own people: the backend `POST /copilot/turn` now takes an optional `person_ids` list (unchanged without it). *Everyone in the network* searches the whole shared network, **including notes other users saved**, and the panel says so. A user with nobody in the network yet gets a clear message instead of an empty answer.
+- **Cited people are clickable chips** that open that person's panel. A person cited from the wider network who isn't on the map shows as a dashed **+ Name** chip that adds them (linking to the existing record) in one click.
+- **Map highlight:** while the panel is open, cited people pulse cyan and the relationship threads the answer mentions (the copilot's `highlight_events` edges) are drawn solid.
+- Backend changes (tested; suite is 52 passing): optional `person_ids`; `university` counts toward relevance; people with only a name and university now get a real sentence ("X is at Y") instead of an empty one and a broken opener.
+- **Verified:** live backend (scoped and network answers, follow-up question with history, validation 400s); the panel in the browser (scope switch, chips, add-from-chip, glow on nodes and threads, conversation kept across panels, no overflow); isolation (a second user with an empty map can't see the first user's people).
+- **Not done:** the answer's per-sentence highlight *timing* (`at_ms`, meant to sync with speech) is ignored, since answers are text; it becomes relevant with voice in phase 5.
 
 ### Phase 5: Voice and live meetings
 - **Talk to me**: Next mints a short-lived signed token (`/api/voice-token`); browser opens `WS /voice/session?mode=network&goal_id=…&token=…`; backend verifies the token before proxying to Deepgram. Needs mic permission UI and reconnect handling (the backend already sends `reconnectable`).

@@ -31,6 +31,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     endpoints: ["POST /copilot/turn"],
     teamNav: "Talk to your network",
     phase: 4,
+    ready: true,
   },
   {
     id: "meeting",

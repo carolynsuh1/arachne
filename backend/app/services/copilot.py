@@ -6,8 +6,12 @@ from ..models import InteractionMemory, Organization, Person, PersonProfile, Rel
 from ..pipeline.deepgram import to_speakable_text
 from ..pipeline.goal_view import _tokens
 
-def build_copilot_turn(db: Session, question: str, history: list[dict]) -> dict:
+def build_copilot_turn(db: Session, question: str, history: list[dict], person_ids: list[str] | None = None) -> dict:
+    """Answer a question from the graph. With `person_ids`, only those people are considered (a user's own map)."""
     people = db.query(Person).order_by(Person.name).all()
+    if person_ids is not None:
+        wanted = set(person_ids)
+        people = [person for person in people if person.id in wanted]
     rels = db.query(Relationship).all()
     orgs = {o.id: o for o in db.query(Organization).all()}
     affiliations, memories = _affiliations(rels, orgs), _memories(db)
@@ -92,20 +96,21 @@ def _memories(db):
     return result
 
 def _score(person, orgs, memories, terms):
-    document = " ".join([person.bio,person.interests,person.skills,*[o.name+" "+o.description for o in orgs],*[m.transcript for m in memories[:3]]]).lower()
+    document = " ".join([person.bio,person.interests,person.skills,person.university or "",*[o.name+" "+o.description for o in orgs],*[m.transcript for m in memories[:3]]]).lower()
     return sum(3 for term in terms if term in document)
 
 def _evidence(person, orgs, memory, terms):
     topics = json.loads(person.interests or "[]")+json.loads(person.skills or "[]")
     matches = [x for x in topics if any(t in x.lower() for t in terms)]
-    text = person.bio.rstrip(".")
+    # People added by name and university have no bio yet; say what is actually known instead of an empty sentence.
+    text = person.bio.rstrip(".") or (f"{person.name} is at {person.university}" if person.university else person.name)
     if matches: text += f", with relevant depth in {', '.join(matches[:2])}"
     if orgs: text += f" through {orgs[0]}"
     if memory: text += f". Your last interaction notes add context: {memory[:120].rstrip('.')}"
     return text+"."
 
 def _starter(person, orgs, memory):
-    topic = (json.loads(person.interests or "[]") or [person.bio])[0]
+    topic = (json.loads(person.interests or "[]") or [person.bio or "your area"])[0]
     if memory: return f"“I’ve been thinking about our last conversation and your work on {topic}. Could I get your take on where to start?”"
     return f"“I’m exploring {topic}, and your experience{' at '+orgs[0] if orgs else ''} stood out. What should I learn first?”"
 

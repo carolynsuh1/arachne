@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { PERSON_FEATURES, type Feature } from "@/lib/features";
 import type { GoalViewData } from "@/lib/goal-view";
 import type { MapPerson } from "@/lib/network";
+import AskPanel, { type AskState } from "./AskPanel";
 import GoalViewPanel from "./GoalViewPanel";
 import PlanPanel from "./PlanPanel";
 import PersonFeaturePanel, { LIVE_PERSON_FEATURES } from "./person/PersonFeaturePanel";
@@ -24,6 +25,9 @@ export default function SidePanel({
   people,
   onAdded,
   onPersonUpdated,
+  ask,
+  onAskChange,
+  goal,
 }: {
   view: PanelView;
   onClose: () => void;
@@ -34,6 +38,10 @@ export default function SidePanel({
   onAdded: (p: Person) => void;
   /** A person changed (e.g. was synced to the team network); the map and this panel should reflect it. */
   onPersonUpdated: (p: Person) => void;
+  /** The "Ask your network" conversation lives in the map so it survives moving between panels. */
+  ask: AskState;
+  onAskChange: (next: AskState | ((prev: AskState) => AskState)) => void;
+  goal: string;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -84,6 +92,18 @@ export default function SidePanel({
         <div className="side-body">
           <p className="side-blurb">{view.feature.blurb}</p>
           <PlanPanel onAdded={onAdded} />
+        </div>
+      ) : view.feature.id === "ask" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <AskPanel
+            state={ask}
+            onChange={onAskChange}
+            people={people}
+            goal={goal}
+            onOpenPerson={(p) => onOpen({ kind: "person", person: p })}
+            onAdded={onAdded}
+          />
         </div>
       ) : view.feature.id === "braindump" ? (
         <div className="side-body">
