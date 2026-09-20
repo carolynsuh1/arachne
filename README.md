@@ -26,8 +26,9 @@ Instead of listing everyone you know, YourWeb starts from a goal and shows a rel
 4. **Voice Network Copilot**
    - Speak or type a goal and get a graph-grounded strategy with timed node and
      edge highlights.
-   - ElevenLabs speaks the response when `ELEVENLABS_API_KEY` is set. Without a
-     key, text and graph animation still run.
+   - A continuous Deepgram Voice Agent session handles Nova-3 listening, Aura
+     speech, interruption, and database-backed tools through a backend WebSocket
+     proxy. The API key never reaches the browser.
    - Select a cited person to rehearse a coffee chat using their profile,
      research brief, and saved interaction memories, then receive structured
      follow-up feedback.
@@ -39,10 +40,10 @@ There is no login and no deployment yet.
 ### Voice input and phone demo
 
 Voice input requests microphone permission explicitly, uses browser live
-captions when available, and falls back to recorded audio sent to
-`POST /transcription`. Configure `ELEVENLABS_API_KEY` (preferred, Scribe) or
-`OPENAI_API_KEY` (Whisper) in `backend/.env`; restart the backend after editing
-the file.
+audio through the shared Deepgram Voice Agent session. The legacy
+`POST /transcription` upload endpoint uses Deepgram Nova-3, with OpenAI Whisper
+as an optional fallback. Configure `DEEPGRAM_API_KEY` in `backend/.env`; restart
+the backend after editing the file.
 
 Browsers only expose the microphone on HTTPS origins or `localhost`. A phone
 opened at a plain LAN URL such as `http://192.168.x.x:5173` cannot record. For a
@@ -80,7 +81,7 @@ python3.12 -m venv .venv || python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Add ELEVENLABS_API_KEY for spoken replies (optional ELEVENLABS_VOICE_ID).
+# Add DEEPGRAM_API_KEY for continuous voice (optional DEEPGRAM_VOICE_MODEL).
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -109,7 +110,8 @@ See `TEAM.md` for Elastic ownership. `POST /pipeline/extract` can turn messy tex
 | GET | `/graph` | Same map, used by the frontend |
 | GET | `/goals/{id}/graph` | People graph locally matched to a saved goal |
 | GET | `/network/tracker` | People grouped by company, club, organization, and location |
-| POST | `/copilot/turn` | Graph-grounded answer, ElevenLabs audio, and timed highlight events |
+| WS | `/voice/session` | Proxied continuous Deepgram Voice Agent session and app tools |
+| POST | `/copilot/turn` | Typed graph-grounded answer and timed highlight events |
 | POST | `/copilot/practice/turn` | Roleplay a selected person using stored context |
 | POST | `/copilot/practice/feedback` | Structured rehearsal feedback |
 | POST | `/sync/sample` | Load local sample JSON; 409 if SQLite already has a network |

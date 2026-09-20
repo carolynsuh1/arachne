@@ -1,5 +1,6 @@
 import { useRef, useState } from "react"
 import { practiceFeedback, practiceTurn } from "../api"
+import { useVoiceCapture } from "../hooks/useVoiceCapture"
 import type {
   ConversationMessage,
   PracticeFeedback,
@@ -20,6 +21,7 @@ export function PracticePage({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const voice = useVoiceCapture("", { mode: "practice" })
 
   async function send() {
     const text = message.trim()
@@ -126,6 +128,23 @@ export function PracticePage({
               {loading ? "…" : "Send"}
             </button>
           </div>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void voice.toggle()}
+              className="rounded-full border border-stone-700 px-4 py-2 text-sm"
+            >
+              {voice.isRecording ? "Stop voice prep" : "Start voice prep"}
+            </button>
+            {voice.isRecording ? (
+              <button type="button" onClick={voice.toggleMute} className="text-sm underline">
+                {voice.isMuted ? "Unmute" : "Mute"}
+              </button>
+            ) : null}
+            <span className="text-xs text-stone-500">{voice.status}</span>
+          </div>
+          {voice.lastAgentText ? <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">{voice.lastAgentText}</p> : null}
+          {voice.error ? <p className="mt-3 text-sm text-red-800">{voice.error}</p> : null}
           {error ? <p className="mt-3 font-sans text-sm text-red-800">{error}</p> : null}
         </section>
 

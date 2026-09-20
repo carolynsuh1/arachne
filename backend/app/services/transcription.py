@@ -4,6 +4,11 @@ import os
 
 import httpx
 
+from ..pipeline.deepgram import (
+    DeepgramConfigurationError,
+    DeepgramError,
+    transcribe_audio as transcribe_with_deepgram,
+)
 
 class TranscriptionConfigurationError(RuntimeError):
     """Raised when no speech-to-text provider has been configured."""
@@ -14,27 +19,16 @@ class TranscriptionProviderError(RuntimeError):
 
 
 def transcribe_audio(audio: bytes, filename: str, content_type: str) -> tuple[str, str]:
-    elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
+    deepgram_key = os.getenv("DEEPGRAM_API_KEY", "").strip()
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
 
-    if elevenlabs_key:
+    if deepgram_key:
         try:
-            response = httpx.post(
-                "https://api.elevenlabs.io/v1/speech-to-text",
-                headers={"xi-api-key": elevenlabs_key},
-                data={"model_id": "scribe_v1"},
-                files={"file": (filename, audio, content_type)},
-                timeout=60,
-            )
-            response.raise_for_status()
-            text = str(response.json().get("text", "")).strip()
-            if text:
-                return text, "elevenlabs"
-            raise TranscriptionProviderError("ElevenLabs did not detect any speech.")
-        except httpx.HTTPError as exc:
+            return transcribe_with_deepgram(audio, content_type), "deepgram"
+        except (DeepgramError, DeepgramConfigurationError) as exc:
             if not openai_key:
                 raise TranscriptionProviderError(
-                    "ElevenLabs transcription failed. Check ELEVENLABS_API_KEY and try again."
+                    str(exc)
                 ) from exc
 
     if openai_key:
@@ -57,6 +51,6 @@ def transcribe_audio(audio: bytes, filename: str, content_type: str) -> tuple[st
             ) from exc
 
     raise TranscriptionConfigurationError(
-        "Voice transcription is not configured. Set ELEVENLABS_API_KEY or OPENAI_API_KEY "
+        "Voice transcription is not configured. Set DEEPGRAM_API_KEY or OPENAI_API_KEY "
         "in backend/.env, then restart the backend."
     )

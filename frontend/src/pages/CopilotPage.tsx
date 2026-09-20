@@ -18,7 +18,7 @@ export function CopilotPage({
   onPractice: (person: { id: string; name: string }) => void
 }) {
   const [graph, setGraph] = useState<GraphResponse | null>(null)
-  const voice = useVoiceCapture(DEMO_PROMPT)
+  const voice = useVoiceCapture(DEMO_PROMPT, { mode: "network" })
   const [history, setHistory] = useState<ConversationMessage[]>([])
   const [turn, setTurn] = useState<CopilotTurn | null>(null)
   const [activeEvent, setActiveEvent] = useState<HighlightEvent | null>(null)
@@ -26,11 +26,16 @@ export function CopilotPage({
   const [error, setError] = useState("")
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timersRef = useRef<number[]>([])
+  const stopVoice = voice.stop
 
   useEffect(() => {
     fetchGraph().then(setGraph).catch((reason) => setError(String(reason)))
-    return () => stopPlayback()
-  }, [])
+    return () => {
+      stopVoice()
+      audioRef.current?.pause()
+      timersRef.current.forEach(window.clearTimeout)
+    }
+  }, [stopVoice])
 
   function stopPlayback() {
     voice.stop()
@@ -130,6 +135,15 @@ export function CopilotPage({
           >
             {voice.isTranscribing ? "Transcribing…" : voice.isRecording ? "Stop listening" : "Talk"}
           </button>
+          {voice.isRecording ? (
+            <button
+              type="button"
+              onClick={voice.toggleMute}
+              className="rounded-full border border-stone-400 px-4 py-2.5 font-sans text-sm"
+            >
+              {voice.isMuted ? "Unmute" : "Mute"}
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={loading || voice.isRecording || voice.isTranscribing || !voice.transcript.trim()}
@@ -146,11 +160,14 @@ export function CopilotPage({
             Load HackMIT prompt
           </button>
         </div>
-        {voice.isRecording || voice.status ? <p className="mt-3 font-sans text-xs text-stone-500">{voice.isRecording ? `Recording ${voice.elapsedSeconds}s` : voice.status}</p> : null}
+        {voice.status ? <p className="mt-3 font-sans text-xs text-stone-500">{voice.status}{voice.isRecording ? ` · ${voice.elapsedSeconds}s` : ""}</p> : null}
         {voice.error ? <p className="mt-3 font-sans text-sm text-red-800">{voice.error}</p> : null}
         {error ? <p className="mt-3 font-sans text-sm text-red-800">{error}</p> : null}
         {turn ? (
           <p className="mt-3 font-sans text-xs text-stone-500">{turn.voice_status}</p>
+        ) : null}
+        {voice.lastAgentText ? (
+          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">{voice.lastAgentText}</p>
         ) : null}
       </section>
 

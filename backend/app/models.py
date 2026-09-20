@@ -149,3 +149,15 @@ class Meeting(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class MeetingTranscriptSegment(Base):
+    """Immutable raw speech segment captured before memory extraction."""
+
+    __tablename__ = "meeting_transcript_segments"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    meeting_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    speaker: Mapped[str] = mapped_column(String, default="user")
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    captured_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
