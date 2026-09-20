@@ -16,6 +16,7 @@ from ..pipeline.deepgram import (
     DeepgramConfigurationError,
     VOICE_AGENT_URL,
     api_key,
+    to_speakable_text,
     voice_agent_settings,
 )
 from ..services.voice_tools import run_voice_tool
@@ -102,7 +103,10 @@ async def _client_to_agent(client: WebSocket, agent) -> None:
                 "InjectUserMessage", "InjectAgentMessage", "KeepAlive",
                 "UpdatePrompt", "UpdateSpeak"
             }:
-                await agent.send(message["text"])
+                if payload.get("type") == "InjectAgentMessage":
+                    field = "message" if "message" in payload else "content"
+                    payload[field] = to_speakable_text(payload.get(field, ""))
+                await agent.send(json.dumps(payload))
 
 
 async def _agent_to_client(agent, client: WebSocket, meeting_id: str) -> None:

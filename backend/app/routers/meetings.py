@@ -229,7 +229,9 @@ def ask_meetings(payload: AskMeetingsIn, db: Session = Depends(get_db)):
     if os.getenv("OPENAI_API_KEY", "").strip():
         try:
             answer = call_terra(
-                "Answer only from the supplied meeting excerpts. Be concise and do not invent facts. Cite meeting titles.",
+                "Answer only from the supplied meeting excerpts. Be concise and do not invent facts. "
+                "Cite meeting titles in conversational plain prose. This answer is read aloud, so never "
+                "use Markdown, HTML, asterisks, underscores, backticks, headings, bullets, or visual emphasis.",
                 f"Question: {payload.question}\n\nExcerpts:\n{context}",
             ).strip()
         except LLMError:

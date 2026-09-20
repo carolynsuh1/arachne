@@ -315,7 +315,9 @@ def _openai_extract(person: Person, transcript: str, db: Session) -> BrainDumpEx
 cards is an array of {category,text,selected}; categories: new_information, topics, personal_details, advice,
 opportunities, recommended_people, commitments, promises_they_made, follow_ups, next_conversation,
 dates, current_projects, career_info, organizations, resources.
-introductions is an array of {name,affiliation,context}. Never invent people."""
+introductions is an array of {name,affiliation,context}. Never invent people.
+spoken_summary is read aloud. Write it as conversational plain prose with no Markdown, HTML, asterisks,
+underscores, backticks, headings, bullets, numbered lists, or visual emphasis."""
     raw = parse_json_object(call_terra(instructions, transcript))
     cards = [BrainDumpCard(**card) for card in raw.get("cards", []) if card.get("category") in CATEGORIES]
     intros = []
