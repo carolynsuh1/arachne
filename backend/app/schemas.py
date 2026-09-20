@@ -124,6 +124,29 @@ class NetworkTrackerOut(BaseModel):
     locations: list[TrackerGroupOut]
 
 
+class NetworkSearchIn(BaseModel):
+    query: str = Field(min_length=2, max_length=500)
+    limit: int = Field(default=8, ge=1, le=20)
+
+
+class NetworkSearchResult(BaseModel):
+    person_id: str
+    name: str
+    bio: str
+    score: float
+    semantic_score: float
+    relationship_strength: float
+    recency_score: float
+    why: str
+    suggested_action: str
+    last_interaction_at: datetime | None = None
+
+
+class NetworkSearchOut(BaseModel):
+    query: str
+    results: list[NetworkSearchResult]
+
+
 class InteractionMemoryCreate(BaseModel):
     person_id: str | None = Field(default=None, max_length=200)
     person_name: str = Field(min_length=1, max_length=120)

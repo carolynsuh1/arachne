@@ -110,6 +110,24 @@ export type NetworkTracker = {
   locations: TrackerGroup[]
 }
 
+export type NetworkSearchResult = {
+  person_id: string
+  name: string
+  bio: string
+  score: number
+  semantic_score: number
+  relationship_strength: number
+  recency_score: number
+  why: string
+  suggested_action: string
+  last_interaction_at: string | null
+}
+
+export type NetworkSearchResponse = {
+  query: string
+  results: NetworkSearchResult[]
+}
+
 export type InteractionMemory = {
   id: string
   person_id: string | null

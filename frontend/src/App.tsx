@@ -8,6 +8,7 @@ import { CopilotPage } from "./pages/CopilotPage"
 import { PracticePage } from "./pages/PracticePage"
 import { BrainDumpPage } from "./pages/BrainDumpPage"
 import { MeetingsPage } from "./pages/MeetingsPage"
+import { NetworkSearchPage } from "./pages/NetworkSearchPage"
 import type { GoalNetworkResult } from "./types"
 
 import { ResearchPage } from "./pages/ResearchPage"
@@ -16,7 +17,7 @@ import type { ResearchTarget } from "./pages/ResearchPage"
 import { ProfilesPage } from "./pages/ProfilesPage"
 import type { SavedProfile } from "./pages/ProfilesPage"
 
-type Page = "follow-ups" | "copilot" | "practice" | "brain-dump" | "meetings" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief"
+type Page = "follow-ups" | "copilot" | "practice" | "brain-dump" | "meetings" | "goal" | "dashboard" | "graph" | "research" | "profiles" | "debrief" | "search"
 
 export default function App() {
   const [profiles,setProfiles]=useState<SavedProfile[]>([])
@@ -76,6 +77,13 @@ export default function App() {
           </button>
           <button
             type="button"
+            onClick={() => setPage("search")}
+            className={`rounded-full px-4 py-1.5 ${page === "search" ? "bg-stone-900 text-white" : "text-stone-700"}`}
+          >
+            Search network
+          </button>
+          <button
+            type="button"
             onClick={() => setPage("goal")}
             className={`rounded-full px-4 py-1.5 ${page === "goal" ? "bg-stone-900 text-white" : "text-stone-700"}`}
           >
@@ -119,6 +127,11 @@ export default function App() {
           />
         ) : page === "dashboard" ? (
           <NetworkDashboardPage onResearch={(person)=>{setTarget(person);setPage("research")}} onBrainDump={openBrainDump} onMeeting={openMeeting} />
+        ) : page === "search" ? (
+          <NetworkSearchPage
+            onResearch={(person) => { setTarget(person); setPage("research") }}
+            onPractice={openPractice}
+          />
         ) : page === "research" ? (
           <ResearchPage
             key={target?.id ?? "search"}
