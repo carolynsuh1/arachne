@@ -5,7 +5,7 @@ export default function AppHeader({ email }: { email?: string }) {
   return (
     <header className="app-header">
       <Link href="/" className="logo">
-        <img src="/figma/globe.svg" alt="" />
+        <img src="/figma/logo.png" alt="" />
         <span>Arachne</span>
       </Link>
       {email ? (

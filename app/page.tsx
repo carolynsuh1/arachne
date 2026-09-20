@@ -68,7 +68,7 @@ export default function Home() {
       {/* Navbar */}
       <header className="navbar">
         <Link href="/" className="logo">
-          <img src={`${F}/globe.svg`} alt="" />
+          <img src={`${F}/logo.png`} alt="" />
           <span>Arachne</span>
         </Link>
         <nav className="nav-links" aria-label="Primary">
@@ -306,7 +306,7 @@ export default function Home() {
           <div className="footer-columns">
             <div className="footer-brand">
               <div className="logo">
-                <img src={`${F}/globe.svg`} alt="" />
+                <img src={`${F}/logo.png`} alt="" />
                 <span>Arachne</span>
               </div>
               <p>
