@@ -31,6 +31,9 @@ def build_graph(db: Session) -> GraphOut:
     people = db.query(Person).order_by(Person.name).all()
     rels = db.query(Relationship).all()
     state = db.get(SyncState, 1)
+    suggested_ids = {
+        rel.target_id for rel in rels if rel.type == "suggested_intro"
+    }
 
     positions = _ring_positions(len(people))
     nodes = [
@@ -44,6 +47,7 @@ def build_graph(db: Session) -> GraphOut:
                 bio=person.bio,
                 interests=json.loads(person.interests or "[]"),
                 skills=json.loads(person.skills or "[]"),
+                suggested=person.id in suggested_ids,
             ),
         )
         for index, person in enumerate(people)
@@ -69,7 +73,7 @@ def build_graph(db: Session) -> GraphOut:
                 id=rel.id,
                 source=source,
                 target=target,
-                label="recommends chat",
+                label="suggested intro" if rel.type == "suggested_intro" else "recommends chat",
                 data=GraphEdgeData(
                     type=rel.type,
                     strength=rel.strength,

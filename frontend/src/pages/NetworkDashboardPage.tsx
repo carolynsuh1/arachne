@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { fetchGoalGraph, fetchNetworkTracker, listGoals } from "../api"
+import { fetchGoalGraph, fetchNetworkTracker, fetchUpcoming, listGoals } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
 import type {
   Goal,
@@ -8,6 +8,7 @@ import type {
   NetworkTracker,
   TrackerGroup,
   TrackerPerson,
+  Reminder,
 } from "../types"
 
 type SortKey = "name" | "company" | "location"
@@ -21,9 +22,10 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 
 type Props = {
   onResearch: (person: { id: string; name: string }) => void
+  onBrainDump: (person: { id: string; name: string }) => void
 }
 
-export function NetworkDashboardPage({ onResearch }: Props) {
+export function NetworkDashboardPage({ onResearch, onBrainDump }: Props) {
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoalId, setSelectedGoalId] = useState("")
   const [graph, setGraph] = useState<GraphResponse | null>(null)
@@ -32,13 +34,15 @@ export function NetworkDashboardPage({ onResearch }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
   const [error, setError] = useState("")
+  const [upcoming, setUpcoming] = useState<Reminder[]>([])
 
   useEffect(() => {
-    Promise.all([listGoals(), fetchNetworkTracker()])
-      .then(([savedGoals, trackerData]) => {
+    Promise.all([listGoals(), fetchNetworkTracker(), fetchUpcoming()])
+      .then(([savedGoals, trackerData, reminders]) => {
         setGoals(savedGoals)
         setTracker(trackerData)
         setSelectedGoalId((current) => current || savedGoals[0]?.id || "")
+        setUpcoming(reminders)
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "Could not load your dashboard.")
@@ -110,6 +114,20 @@ export function NetworkDashboardPage({ onResearch }: Props) {
 
       {error ? <p className="font-sans text-sm text-red-800">{error}</p> : null}
 
+      <section className="rounded-xl border border-stone-300 bg-white p-5">
+        <h2 className="text-2xl">Upcoming</h2>
+        <p className="mt-1 text-sm text-stone-600">Who to contact next and why.</p>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {upcoming.length ? upcoming.map((reminder) => {
+            const person = tracker?.people.find((item) => item.id === reminder.person_id)
+            return <article key={reminder.id} className="rounded-lg bg-stone-100 p-3">
+              <strong>{person?.name ?? "Contact"}</strong><p className="text-sm">{reminder.action}</p>
+              <p className="font-sans text-xs text-stone-500">{reminder.due_at ? `Due ${new Date(reminder.due_at).toLocaleDateString()}` : "No date"} · {reminder.status}</p>
+            </article>
+          }) : <p className="text-sm text-stone-500">Confirmed coffee-chat follow-ups will appear here.</p>}
+        </div>
+      </section>
+
       <section className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="rounded-xl border border-stone-300 bg-white p-4">
           <h2 className="text-2xl">Saved goals</h2>
@@ -158,7 +176,7 @@ export function NetworkDashboardPage({ onResearch }: Props) {
                   edges={graph.edges}
                   onSelect={setSelected}
                 />
-                <PersonDetail selected={selected} onResearch={onResearch} />
+                <PersonDetail selected={selected} onResearch={onResearch} onBrainDump={onBrainDump} />
               </div>
             </>
           ) : (
@@ -208,9 +226,11 @@ export function NetworkDashboardPage({ onResearch }: Props) {
 function PersonDetail({
   selected,
   onResearch,
+  onBrainDump,
 }: {
   selected: (GraphNodeData & { id: string }) | null
   onResearch: Props["onResearch"]
+  onBrainDump: Props["onBrainDump"]
 }) {
   return (
     <aside className="rounded-xl border border-stone-300 bg-white p-4">
@@ -240,6 +260,7 @@ function PersonDetail({
           >
             Prepare coffee chat
           </button>
+          <button type="button" onClick={() => onBrainDump({id: selected.id.replace(/^person:/, ""), name: selected.name})} className="mt-2 rounded-full border border-stone-900 px-4 py-2 font-sans text-sm">Brain Dump</button>
         </>
       ) : (
         <p className="text-stone-600">Select a person to see why they match.</p>

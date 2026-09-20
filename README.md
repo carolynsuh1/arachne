@@ -23,9 +23,40 @@ Instead of listing everyone you know, YourWeb starts from a goal and shows a rel
    - Sort people by name, company, or geographic area.
    - Track companies, clubs, organizations, and location coverage.
 
+4. **Voice Network Copilot**
+   - Speak or type a goal and get a graph-grounded strategy with timed node and
+     edge highlights.
+   - ElevenLabs speaks the response when `ELEVENLABS_API_KEY` is set. Without a
+     key, text and graph animation still run.
+   - Select a cited person to rehearse a coffee chat using their profile,
+     research brief, and saved interaction memories, then receive structured
+     follow-up feedback.
+
 Entity extraction, Elastic, and goal-specific graph views live in `backend/app/pipeline/` and are documented in `TEAM.md`.
 
 There is no login and no deployment yet.
+
+### Voice input and phone demo
+
+Voice input requests microphone permission explicitly, uses browser live
+captions when available, and falls back to recorded audio sent to
+`POST /transcription`. Configure `ELEVENLABS_API_KEY` (preferred, Scribe) or
+`OPENAI_API_KEY` (Whisper) in `backend/.env`; restart the backend after editing
+the file.
+
+Browsers only expose the microphone on HTTPS origins or `localhost`. A phone
+opened at a plain LAN URL such as `http://192.168.x.x:5173` cannot record. For a
+demo, keep the backend running, then expose Vite through one HTTPS tunnel:
+
+```bash
+cd frontend
+npm run dev:phone
+# In another terminal (or use your preferred HTTPS tunnel):
+npx localtunnel --port 5173
+```
+
+Open the resulting `https://…` URL on the phone and allow microphone access.
+The Vite `/api` proxy keeps backend calls on the same secure origin.
 
 ## Folder map
 
@@ -49,6 +80,7 @@ python3.12 -m venv .venv || python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+# Add ELEVENLABS_API_KEY for spoken replies (optional ELEVENLABS_VOICE_ID).
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -77,5 +109,8 @@ See `TEAM.md` for Elastic ownership. `POST /pipeline/extract` can turn messy tex
 | GET | `/graph` | Same map, used by the frontend |
 | GET | `/goals/{id}/graph` | People graph locally matched to a saved goal |
 | GET | `/network/tracker` | People grouped by company, club, organization, and location |
+| POST | `/copilot/turn` | Graph-grounded answer, ElevenLabs audio, and timed highlight events |
+| POST | `/copilot/practice/turn` | Roleplay a selected person using stored context |
+| POST | `/copilot/practice/feedback` | Structured rehearsal feedback |
 | POST | `/sync/sample` | Load local sample JSON; 409 if SQLite already has a network |
 | POST | `/pipeline/extract` | Messy text → Terra → upsert people/orgs/relationships |
