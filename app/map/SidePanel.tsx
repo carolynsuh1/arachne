@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import PhotoUpload from "./PhotoUpload";
 import RemovePerson from "./RemovePerson";
 import { PERSON_FEATURES, type Feature } from "@/lib/features";
 import type { GoalViewData } from "@/lib/goal-view";
@@ -76,6 +77,7 @@ export default function SidePanel({
 
       {view.kind === "person" ? (
         <div className="side-body">
+          <PhotoUpload key={view.person.id} person={view.person} />
           <p className="side-label">What would you like to do?</p>
           <div className="side-actions">
             {PERSON_FEATURES.map((f) => (

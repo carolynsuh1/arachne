@@ -6,6 +6,7 @@ import { GLOBAL_FEATURES } from "@/lib/features";
 import type { GoalViewData } from "@/lib/goal-view";
 import type { MapEdge, MapPerson, UserNetwork } from "@/lib/network";
 import { EMPTY_ASK, type AskState } from "./AskPanel";
+import PersonAvatar from "./PersonAvatar";
 import SidePanel, { type PanelView } from "./SidePanel";
 
 const RING_STEP = 110;
@@ -213,7 +214,7 @@ export default function MapClient({
                 title={match && match.score > 0 ? `Goal match: ${match.why}` : undefined}
                 aria-label={`${p.name}, ${p.university}.${match && match.score > 0 ? ` Goal match: ${match.why}` : ""} Open actions`}
               >
-                <span className="node-avatar">{initials(p.name)}</span>
+                <PersonAvatar person={p} />
                 <span className="node-info">
                   <span className="node-name">{p.name}</span>
                   <span className="node-sub">{p.university}</span>

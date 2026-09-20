@@ -9,6 +9,10 @@ export function linkedinHandle(url){
  if(!match)throw new ResearchError('LinkedIn directories and posts are not profile sources.',422);
  return match[1];
 }
+export function profilePhoto(value){
+ const candidate=typeof value==='string'?value:value?.url;
+ try{const url=new URL(candidate);return url.protocol==='https:'&&/(^|\.)licdn\.com$/.test(url.hostname)?url.href:undefined;}catch{return undefined;}
+}
 export function normalizeProfile(raw,handle,retrievedAt=new Date().toISOString()){
  const data=Array.isArray(raw)?raw[0]:raw;
  if(!data || typeof data.fullName!=='string' || data.public_identifier!==decodeURIComponent(handle))throw new ResearchError('Profile provider returned an incomplete or mismatched profile.',502);
@@ -23,7 +27,7 @@ export function normalizeApifyProfile(raw,handle,retrievedAt=new Date().toISOStr
  if(!d||d.publicIdentifier!==decodeURIComponent(handle)||typeof d.firstName!=='string')throw new ResearchError('Apify returned an incomplete or mismatched profile.',502);
  const text=v=>typeof v==='string'?v:'';
  const date=v=>typeof v==='string'?v:text(v?.text)||[v?.month,v?.year].filter(Boolean).join(' ');
- const profile={name:[d.firstName,d.lastName].filter(Boolean).join(' '),headline:text(d.headline),about:text(d.about),
+ const profile={photoUrl:profilePhoto(d.photo??d.profilePicture??d.profilePictureUrl),name:[d.firstName,d.lastName].filter(Boolean).join(' '),headline:text(d.headline),about:text(d.about),
   experience:(d.experience??[]).map(x=>({company:text(x.companyName),position:text(x.position),summary:text(x.description),starts_at:date(x.startDate),ends_at:date(x.endDate)})),
   education:(d.education??[]).map(x=>({school:text(x.schoolName),degree:text(x.degree),field_of_study:text(x.fieldOfStudy),starts_at:date(x.startDate),ends_at:date(x.endDate),summary:text(x.description)}))};
  return {url:`https://www.linkedin.com/in/${handle}/`,title:profile.name,text:JSON.stringify(profile,null,2),profile,provider:'apify',kind:'profile_provider',retrievedAt};
