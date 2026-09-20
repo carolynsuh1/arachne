@@ -134,6 +134,175 @@
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }
 
+/* ---------- Per-person panels (research, practice, brain dump) ---------- */
+.panel-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+}
+
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.source-list a,
+.suggestion-name[href] {
+  color: var(--cyan);
+  text-decoration: underline;
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 46vh;
+  padding: 4px 2px;
+  overflow-y: auto;
+}
+
+.chat-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 92%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.chat-who {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dim);
+}
+
+.chat-them {
+  align-self: flex-start;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.chat-user {
+  align-self: flex-end;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid var(--cyan);
+  color: var(--white);
+}
+
+.chat-form,
+.feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.check-card input {
+  margin-top: 3px;
+  accent-color: var(--cyan);
+}
+
+.check-card small,
+.followup small {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.followup {
+  padding: 10px 12px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.followup small {
+  text-transform: none;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.followup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.followup-actions button {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.followup-actions button:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
 /* ---------- Plan and goal-view panels ---------- */
 .side-plan-summary {
   font-size: 15px;

@@ -95,5 +95,94 @@ export const getGoalGraph = (goalId: string, personIds?: string[]) =>
 
 export const getTracker = () => teamFetch<{ people: TrackerPerson[] }>("/network/tracker");
 
+// ---- Phase 3: per-person features ----
+
+export type ResearchResult = {
+  status: string;
+  person: string;
+  coverage?: string;
+  saved?: boolean;
+  brief_id?: string;
+  candidates?: { url: string; title: string; description?: string }[];
+  facts?: { id: string; claim: string; sourceId: string; evidence: string }[];
+  sources?: { id: string; url: string; title: string; retrievedAt: string }[];
+  questions?: { text: string; viewerEvidence?: string }[];
+  warnings?: string[];
+  uncertainties?: string[];
+};
+export type Chat = { role: "user" | "assistant"; content: string };
+export type BrainDumpCard = { category: string; text: string; selected: boolean };
+export type Introduction = { name: string; affiliation: string; context: string; existing_person_id?: string | null };
+export type Extraction = { cards: BrainDumpCard[]; introductions: Introduction[]; spoken_summary: string; provider: string };
+export type Reminder = { id: string; person_id: string; action: string; due_at: string | null; status: string; notes: string };
+export type FollowUp = {
+  id: string;
+  person_id: string;
+  person: string;
+  action: string;
+  due_at: string | null;
+  bucket: string;
+  why: string;
+  source: { date: string; transcript: string } | null;
+};
+
+/** The person's most recent saved brief (free: nothing is re-researched), or null. */
+export const getSavedResearch = (personId: string) =>
+  teamFetch<ResearchResult | null>(`/research/people/${encodeURIComponent(personId)}`);
+
+/** Paid: the research service calls search and AI providers. Can take up to ~100 seconds. */
+export const runResearch = (input: {
+  name: string;
+  affiliation: string;
+  goal: string;
+  person_id: string;
+  viewer_profile_id?: string;
+  profileUrl?: string;
+}) => teamFetch<ResearchResult>("/research", { method: "POST", body: JSON.stringify(input) }, 120000);
+
+export const makeQuestions = (briefId: string, input: { viewer_profile_id: string; goal: string }) =>
+  teamFetch<ResearchResult>(
+    `/research/briefs/${encodeURIComponent(briefId)}/questions`,
+    { method: "POST", body: JSON.stringify(input) },
+    120000,
+  );
+
+/** The "About me" record the backend uses to personalise questions. Idempotent (PUT). */
+export const putPersonalProfile = (
+  profileId: string,
+  data: { name: string; school: string; background: string; interests: string; goals: string; contribution: string },
+) => teamFetch(`/my-profile/${encodeURIComponent(profileId)}`, { method: "PUT", body: JSON.stringify(data) });
+
+export const practiceTurn = (input: { person_id: string; message: string; history: Chat[] }) =>
+  teamFetch<{ reply: string; spoken_text: string }>("/copilot/practice/turn", { method: "POST", body: JSON.stringify(input) });
+
+export const practiceFeedback = (input: { person_id: string; transcript: Chat[] }) =>
+  teamFetch<{ topics_connected: string; missed_opportunity: string; suggested_follow_up: string; next_action: string }>(
+    "/copilot/practice/feedback",
+    { method: "POST", body: JSON.stringify(input) },
+  );
+
+export const extractBrainDump = (input: { person_id: string; transcript: string }) =>
+  teamFetch<Extraction>("/brain-dumps/extract", { method: "POST", body: JSON.stringify(input) });
+
+export const confirmBrainDump = (input: {
+  person_id: string;
+  transcript: string;
+  cards: BrainDumpCard[];
+  introductions: Introduction[];
+}) =>
+  teamFetch<{ reminders: Reminder[]; created_people: string[]; spoken_summary: string }>("/brain-dumps/confirm", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const listFollowUps = () => teamFetch<FollowUp[]>("/follow-ups");
+
+export const updateFollowUp = (reminderId: string, input: { action: string; days: number }) =>
+  teamFetch<{ ok: boolean }>(`/follow-ups/${encodeURIComponent(reminderId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
 /** Same normalisation the backend uses to decide two names are the same person. */
 export const normalizeName = (name: string) => name.trim().split(/\s+/).join(" ").toLowerCase();

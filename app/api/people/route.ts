@@ -1,54 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { assertSameOrigin, jsonError, requireApiUser, zodFields } from "@/lib/http";
-import {
-  TeamApiError,
-  createTeamPerson,
-  listTeamPeople,
-  normalizeName,
-  type TeamPerson,
-} from "@/lib/team-api";
+import { resolveBackendPerson, type Resolved } from "@/lib/people";
+import { TeamApiError } from "@/lib/team-api";
 import { personSchema } from "@/lib/validation";
 
 /* ---------------------------------------------------------------------------
- * STUB: BACKEND WEB-SCRAPER HOOK  (NOT IMPLEMENTED)
+ * HOOK: AUTOMATIC ENRICHMENT AFTER A PERSON IS ADDED  (intentionally a no-op)
  *
- * After a person is saved, public-web research on them can run here. The backend already exposes it:
- *   POST {TEAM_API_URL}/research  { name, affiliation: <university>, person_id: <backendPersonId> }
- * (it calls research-service and uses paid providers: Apify / Firecrawl / OpenAI).
- * It is deliberately NOT called automatically on every Add person; it becomes the per-person
- * "Research" button in phase 3 of INTEGRATION_PLAN.md.
+ * Research on a person is now a deliberate, per-person "Research" button
+ * (app/api/net/people/[id]/research), because it calls paid providers (Apify / Firecrawl / OpenAI) and
+ * can take ~2 minutes. If you ever want research to start automatically on Add person, call it here.
  * ------------------------------------------------------------------------- */
 async function callWebScraperStub(_person: { id: string; name: string; university: string }): Promise<void> {
-  // TODO(scraper): invoke the backend research/scraper for `_person` here.
-}
-
-type Resolved =
-  | { kind: "ok"; backendId: string }
-  | { kind: "conflict"; existing: TeamPerson | null }
-  | { kind: "offline" };
-
-/** Find or create the person in the team backend (the source of truth for the network). */
-async function resolveBackendPerson(name: string, university: string, linkExistingId?: string): Promise<Resolved> {
-  try {
-    if (linkExistingId) {
-      const match = (await listTeamPeople()).find(
-        (p) => p.id === linkExistingId && normalizeName(p.name) === normalizeName(name),
-      );
-      if (!match) throw new TeamApiError(400, "That person record no longer matches.");
-      return { kind: "ok", backendId: match.id };
-    }
-    const created = await createTeamPerson({ name, university });
-    return { kind: "ok", backendId: created.id };
-  } catch (error) {
-    if (!(error instanceof TeamApiError)) throw error;
-    if (error.status === 409) {
-      const existing = (await listTeamPeople().catch(() => [])).find((p) => normalizeName(p.name) === normalizeName(name));
-      return { kind: "conflict", existing: existing ?? null };
-    }
-    if (error.unreachable) return { kind: "offline" };
-    throw error;
-  }
+  // Intentionally empty. See the note above.
 }
 
 export async function GET() {

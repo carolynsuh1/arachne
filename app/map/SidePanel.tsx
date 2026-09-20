@@ -6,6 +6,7 @@ import type { GoalViewData } from "@/lib/goal-view";
 import type { MapPerson } from "@/lib/network";
 import GoalViewPanel from "./GoalViewPanel";
 import PlanPanel from "./PlanPanel";
+import PersonFeaturePanel, { LIVE_PERSON_FEATURES } from "./person/PersonFeaturePanel";
 
 export type Person = MapPerson;
 
@@ -22,6 +23,7 @@ export default function SidePanel({
   goalView,
   people,
   onAdded,
+  onPersonUpdated,
 }: {
   view: PanelView;
   onClose: () => void;
@@ -30,6 +32,8 @@ export default function SidePanel({
   people: Person[];
   /** A person was added from a suggestion; the map should show them. */
   onAdded: (p: Person) => void;
+  /** A person changed (e.g. was synced to the team network); the map and this panel should reflect it. */
+  onPersonUpdated: (p: Person) => void;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -81,10 +85,43 @@ export default function SidePanel({
           <p className="side-blurb">{view.feature.blurb}</p>
           <PlanPanel onAdded={onAdded} />
         </div>
+      ) : view.feature.id === "braindump" ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <p className="side-label">Who was it with?</p>
+          {people.length === 0 ? (
+            <p className="side-note">Add someone to your map first.</p>
+          ) : (
+            <div className="side-actions">
+              {people.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="side-action"
+                  onClick={() =>
+                    onOpen({
+                      kind: "feature",
+                      feature: PERSON_FEATURES.find((f) => f.id === "person-braindump")!,
+                      person: p,
+                    })
+                  }
+                >
+                  <span>{p.name}</span>
+                  <small>{p.university}</small>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       ) : view.feature.id === "goalviews" ? (
         <div className="side-body">
           <p className="side-blurb">{view.feature.blurb}</p>
           <GoalViewPanel data={goalView} people={people} onSelect={(p) => onOpen({ kind: "person", person: p })} />
+        </div>
+      ) : view.person && LIVE_PERSON_FEATURES.has(view.feature.id) ? (
+        <div className="side-body">
+          <p className="side-blurb">{view.feature.blurb}</p>
+          <PersonFeaturePanel feature={view.feature} person={view.person} onPersonUpdated={onPersonUpdated} />
         </div>
       ) : (
         <div className="side-body">

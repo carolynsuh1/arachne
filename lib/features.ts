@@ -53,6 +53,7 @@ export const GLOBAL_FEATURES: Feature[] = [
     endpoints: ["POST /brain-dumps/extract", "POST /brain-dumps/confirm", "GET /brain-dumps/who-next"],
     teamNav: "Goal views (then Brain dump on a person)",
     phase: 3,
+    ready: true,
   },
   {
     id: "suggest",
@@ -82,6 +83,7 @@ export const PERSON_FEATURES: Feature[] = [
     endpoints: ["POST /research", "GET /research/people/{id}", "POST /research/briefs/{id}/questions"],
     teamNav: "Research",
     phase: 3,
+    ready: true,
   },
   {
     id: "practice",
@@ -90,6 +92,7 @@ export const PERSON_FEATURES: Feature[] = [
     endpoints: ["POST /copilot/practice/turn", "POST /copilot/practice/feedback"],
     teamNav: "Talk to your network (then Practice)",
     phase: 3,
+    ready: true,
   },
   {
     id: "person-braindump",
@@ -98,6 +101,7 @@ export const PERSON_FEATURES: Feature[] = [
     endpoints: ["POST /brain-dumps/extract", "POST /brain-dumps/confirm", "POST /brain-dumps/reminders"],
     teamNav: "Goal views (Brain dump on a person)",
     phase: 3,
+    ready: true,
   },
   {
     id: "person-meeting",

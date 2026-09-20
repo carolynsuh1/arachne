@@ -29,6 +29,27 @@ export async function postJson<T = { redirect?: string }>(url: string, payload: 
   }
 }
 
+export async function getJson<T>(url: string): Promise<ApiResult<T>> {
+  try {
+    return await parse<T>(await fetch(url));
+  } catch {
+    return networkError;
+  }
+}
+
+export async function patchJson<T = { ok: boolean }>(url: string, payload: unknown): Promise<ApiResult<T>> {
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await parse<T>(res);
+  } catch {
+    return networkError;
+  }
+}
+
 export async function postForm<T = { redirect?: string }>(url: string, form: FormData): Promise<ApiResult<T>> {
   try {
     return await parse<T>(await fetch(url, { method: "POST", body: form }));

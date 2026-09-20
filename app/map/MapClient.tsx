@@ -103,6 +103,13 @@ export default function MapClient({
     (goalView?.matches ?? []).filter((m) => m.score > 0).slice(0, 3).map((m) => m.personId),
   );
 
+  function personUpdated(p: MapPerson) {
+    setPeople((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+    setPanel((prev) => (prev && prev.kind === "feature" && prev.person?.id === p.id ? { ...prev, person: p } : prev));
+    void refresh();
+    void refreshGoalView();
+  }
+
   function addedPerson(p: MapPerson) {
     setPeople((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]));
     void refresh();
@@ -228,6 +235,7 @@ export default function MapClient({
           goalView={goalView}
           people={people}
           onAdded={addedPerson}
+          onPersonUpdated={personUpdated}
         />
       )}
 

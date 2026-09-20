@@ -79,13 +79,18 @@ Each phase ends with something demoable. The **Phase** column in `lib/features.t
 - Verified against the real backend: matches change when the goal changes (Berkeley-driven → robotics-driven); exactly one backend goal per distinct goal text; self-repair after a stale goal id; offline (all endpoints still answer, goal still saves, panels say what's missing, university groups still work from local data).
 - **Known gaps:** people saved while the backend was offline can't be scored until they sync; match percentages are relative, not absolute; without an `OPENAI_API_KEY` the plan comes from the backend's built-in planner (the panel says which wrote it); each new goal text leaves one more goal row in the shared backend (there is no delete endpoint).
 
-### Phase 3: Per-person actions (text-based)
-Click a person → panel (already built). Wire up each action:
-- **Research** → `/research` + question generation (`/research/briefs/{id}/questions`).
-- **Practice conversation** → `/copilot/practice/turn` + `/feedback` (chat UI in the panel).
-- **Brain dump** → `/brain-dumps/extract`, review, `/confirm`; reminders via `/brain-dumps/reminders`.
-- Resume: send the uploaded resume to `POST /person-data/{id}/resume` (or the resume parser) for **me**, and pre-fill `/profile` fields from the result.
-- **Done when:** each action works end to end for a person on the map.
+### Phase 3: Per-person actions: DONE (Research verified with a stand-in provider, see below)
+Click a person → panel → action. Every per-person route checks that the caller owns the person and that the person is in the team network (`lib/person-route.ts`).
+- **Research** (`/api/net/people/[id]/research`, `/questions`): reopens the last saved brief for free. **Run research is explicit, confirmed, and capped at 10/hour per user** because it calls paid providers and takes up to ~2 min. Shows facts (with the source passage), sources (only `https` links become links), warnings, and conversation starters. If several people match, it lists candidates to pick from. "Write/rewrite questions with my profile" copies the user's profile and goal into the backend's About-me record (`lib/viewer-profile.ts`, a stable UUID per user, no extra column) and asks for personalised questions; the brief id must be that person's latest, so a foreign brief can't be used.
+- **Practice conversation** (`practice/turn`, `practice/feedback`): chat with the backend's rehearsal stand-in, then feedback. Works with no API keys (the backend's replies are rule-based).
+- **Brain dump** (`brain-dump/extract`, `confirm`): write → review cards → save. Nothing is saved until Save. Introductions the note mentions **start unticked**, because ticking one adds a person to the shared network. Follow-ups for the person (the team's new `/follow-ups` API) are listed with Done / Snooze / Dismiss. The global Brain dump button asks who it was with, then opens the same panel.
+- **Sync gate:** people saved while the backend was offline get a one-click "Add to the team network" (`POST /api/people/[id]/sync`) with the same duplicate-name confirmation as Add person. This closes the "not retried automatically" gap from phase 1.
+- Names are whitespace-collapsed on save so they always match the backend's copy (research and links compare names).
+- **Verified:** against the live backend for practice, brain dump, follow-ups, sync (including a real duplicate-name conflict), validation (400), ownership (404) and the not-synced gate (409); in the browser for every panel. The research service **cannot start without `FIRECRAWL_API_KEY`** (and needs `OPENAI_API_KEY`), and no keys were available, so the paid path was verified with a throwaway stand-in that returns the same response shapes. That proves our plumbing (what is sent, saved, reopened, rendered), **not** the real providers. With the service down the panel shows the backend's own message plus how to start it.
+- **Not done, on purpose:**
+  - *Resume prefill for "me"* (send the uploaded resume to `POST /person-data/{id}/resume` and pre-fill `/profile`): it needs the user to exist as a backend person, the research service's resume parser, and provider keys. Deferred until keys exist; the profile is used for questions today through the About-me sync above.
+  - *Log a meeting* stays a placeholder (phase 5).
+- **Cost/safety notes:** Brain dump confirm writes to the shared network (notes on the person; new people only if ticked). The optional research service is started with `npm run dev:all -- --research` and is non-critical: it exiting does not stop the web app or API.
 
 ### Phase 4: Ask your network
 - **Ask your network** → `POST /copilot/turn` with history; chat panel; cite people as clickable chips that select the node.
