@@ -18,6 +18,6 @@ export function mintVoiceToken(claims: Omit<VoiceClaims, "exp">) {
 }
 
 export function voiceWebSocketUrl() {
-  const base = (process.env.TEAM_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+  const base = (process.env.VOICE_API_URL || process.env.TEAM_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
   return base.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
 }
