@@ -5,7 +5,7 @@ import type { ResearchInput, ResearchResult } from "../api"
 export type ResearchTarget = { id:string; name:string }
 function safeUrl(url:string) { try { return new URL(url).protocol === "https:" ? url : undefined } catch { return undefined } }
 const inputStyle="mt-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 font-sans text-sm"
-export function ResearchPage({target:initialTarget,goal,viewerId,viewerName,onOpenProfiles,onDebrief}:{target?:ResearchTarget;goal?:string;viewerId?:string;viewerName?:string;onOpenProfiles:()=>void;onDebrief?:(person:ResearchTarget)=>void}) {
+export function ResearchPage({target:initialTarget,goal,viewerId,viewerName,onOpenProfiles,onDebrief,onBrainDump}:{target?:ResearchTarget;goal?:string;viewerId?:string;viewerName?:string;onOpenProfiles:()=>void;onDebrief?:(person:ResearchTarget)=>void;onBrainDump?:(person:ResearchTarget)=>void}) {
  const profileDirty=false
  const [target,setTarget]=useState(initialTarget)
  const [name,setName]=useState(target?.name ?? "")
@@ -28,6 +28,7 @@ export function ResearchPage({target:initialTarget,goal,viewerId,viewerName,onOp
   <header><p className="font-sans text-sm uppercase tracking-wide text-stone-500">Coffee-chat research</p><h1 className="mt-2 text-4xl">Know who you are meeting</h1><p className="mt-3 text-stone-600">Find a public profile, confirm the person, and prepare with sourced experience and conversation starters.</p></header>
   <section className="flex items-center justify-between rounded-xl border border-stone-300 bg-stone-50 p-5"><p>{viewerId?`Personalizing questions for ${viewerName || "your saved profile"}`:"Select your profile to personalize questions."}</p><button disabled={busy} onClick={onOpenProfiles} className="underline">{viewerId?"Manage profiles":"Choose profile"}</button></section>
   <fieldset disabled={busy}><PersonDataPanel target={target} onSelect={setTarget} name={name} result={result} onBrief={setResult}/></fieldset>
+  {target && onBrainDump ? <button type="button" onClick={() => onBrainDump(target)} className="rounded-full bg-stone-900 px-5 py-2.5 text-white">Brain Dump after your chat</button> : null}
   <form onSubmit={e=>{e.preventDefault();void run(profile||undefined)}} className="rounded-xl border border-stone-300 bg-stone-50 p-5">
    <fieldset disabled={busy||profileDirty} className="space-y-4 disabled:opacity-60"><div className="grid gap-4 md:grid-cols-2">
     <label>Name<input required maxLength={120} readOnly={!!target} value={name} onChange={e=>setName(e.target.value)} className={inputStyle}/></label>

@@ -26,18 +26,32 @@ type Props = {
   nodes: GraphNode[]
   edges: GraphEdge[]
   onSelect: (node: GraphNodeData & { id: string }) => void
+  activeNodeId?: string | null
+  activeEdgeId?: string | null
+  activeNote?: string
 }
 
-export function RelationshipGraph({ nodes, edges, onSelect }: Props) {
+export function RelationshipGraph({
+  nodes,
+  edges,
+  onSelect,
+  activeNodeId,
+  activeEdgeId,
+  activeNote,
+}: Props) {
   const flowNodes: Node[] = useMemo(
     () =>
       nodes.map((node) => ({
         id: node.id,
         type: node.type,
         position: node.position,
-        data: node.data,
+        data: {
+          ...node.data,
+          voiceActive: node.id === activeNodeId,
+          voiceNote: node.id === activeNodeId ? activeNote : undefined,
+        },
       })),
-    [nodes],
+    [nodes, activeNodeId, activeNote],
   )
 
   const flowEdges: Edge[] = useMemo(
@@ -47,9 +61,13 @@ export function RelationshipGraph({ nodes, edges, onSelect }: Props) {
         source: edge.source,
         target: edge.target,
         label: edge.label,
-        animated: edge.data.strength >= 0.8,
+        animated: edge.data.strength >= 0.8 || edge.id === activeEdgeId,
+        style:
+          edge.id === activeEdgeId
+            ? { stroke: "#b45309", strokeWidth: 4 }
+            : undefined,
       })),
-    [edges],
+    [edges, activeEdgeId],
   )
 
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([])

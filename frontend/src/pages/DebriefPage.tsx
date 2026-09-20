@@ -1,28 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   createInteraction,
   fetchNetworkTracker,
   listInteractions,
 } from "../api"
+import { useVoiceCapture } from "../hooks/useVoiceCapture"
 import type { InteractionMemory, TrackerPerson } from "../types"
-
-type SpeechResult = {
-  isFinal: boolean
-  0: { transcript: string }
-}
-
-type SpeechRecognitionLike = {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  start: () => void
-  stop: () => void
-  onresult: ((event: { resultIndex: number; results: ArrayLike<SpeechResult> }) => void) | null
-  onerror: ((event: { error: string }) => void) | null
-  onend: (() => void) | null
-}
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
 
 const PROMPTS = [
   "What stood out?",
@@ -37,14 +20,6 @@ function localDateTime() {
   return now.toISOString().slice(0, 16)
 }
 
-function speechConstructor() {
-  const browserWindow = window as typeof window & {
-    SpeechRecognition?: SpeechRecognitionConstructor
-    webkitSpeechRecognition?: SpeechRecognitionConstructor
-  }
-  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition
-}
-
 type Props = {
   person?: { id: string; name: string }
 }
@@ -54,15 +29,11 @@ export function DebriefPage({ person }: Props) {
   const [personId, setPersonId] = useState(person?.id ?? "")
   const [guestName, setGuestName] = useState(person?.id ? "" : person?.name ?? "")
   const [happenedAt, setHappenedAt] = useState(localDateTime)
-  const [transcript, setTranscript] = useState("")
-  const [interim, setInterim] = useState("")
   const [memories, setMemories] = useState<InteractionMemory[]>([])
-  const [listening, setListening] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
-  const speechSupported = Boolean(speechConstructor())
+  const voice = useVoiceCapture()
 
   useEffect(() => {
     Promise.all([fetchNetworkTracker(), listInteractions()])
@@ -73,64 +44,17 @@ export function DebriefPage({ person }: Props) {
       .catch((reason) => {
         setError(reason instanceof Error ? reason.message : "Could not load debriefs.")
       })
-    return () => recognitionRef.current?.stop()
   }, [])
-
-  function startListening() {
-    const Recognition = speechConstructor()
-    if (!Recognition) return
-
-    setError("")
-    setMessage("")
-    const recognition = new Recognition()
-    recognition.continuous = true
-    recognition.interimResults = true
-    recognition.lang = "en-US"
-    recognition.onresult = (event) => {
-      let finalText = ""
-      let interimText = ""
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const result = event.results[index]
-        if (result.isFinal) finalText += result[0].transcript
-        else interimText += result[0].transcript
-      }
-      if (finalText.trim()) {
-        setTranscript((current) => [current.trim(), finalText.trim()].filter(Boolean).join(" "))
-      }
-      setInterim(interimText)
-    }
-    recognition.onerror = (event) => {
-      setListening(false)
-      setInterim("")
-      setError(
-        event.error === "not-allowed"
-          ? "Microphone access was blocked. Allow it in your browser or type the debrief."
-          : "Voice input stopped. Your captured words are still here.",
-      )
-    }
-    recognition.onend = () => {
-      setListening(false)
-      setInterim("")
-    }
-    recognitionRef.current = recognition
-    recognition.start()
-    setListening(true)
-  }
-
-  function stopListening() {
-    recognitionRef.current?.stop()
-    setListening(false)
-  }
 
   async function saveDebrief() {
     const selected = people.find((person) => person.id === personId)
     const personName = selected?.name ?? guestName.trim()
-    if (!personName || !transcript.trim()) {
+    if (!personName || !voice.transcript.trim()) {
       setError("Choose who you met and record or type a debrief first.")
       return
     }
 
-    stopListening()
+    voice.stop()
     setSaving(true)
     setError("")
     setMessage("")
@@ -138,12 +62,11 @@ export function DebriefPage({ person }: Props) {
       const saved = await createInteraction({
         ...(selected ? { person_id: selected.id } : {}),
         person_name: personName,
-        transcript: transcript.trim(),
+        transcript: voice.transcript.trim(),
         happened_at: new Date(happenedAt).toISOString(),
       })
       setMemories((current) => [saved, ...current])
-      setTranscript("")
-      setInterim("")
+      voice.setTranscript("")
       setMessage(`Saved your conversation with ${personName}.`)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not save this debrief.")
@@ -216,44 +139,42 @@ export function DebriefPage({ person }: Props) {
         </div>
 
         <div className="mt-7 text-center">
-          {speechSupported ? (
-            <button
-              type="button"
-              onClick={listening ? stopListening : startListening}
-              aria-pressed={listening}
-              className={`mx-auto flex size-24 items-center justify-center rounded-full font-sans text-sm font-medium text-white shadow-sm transition ${
-                listening ? "animate-pulse bg-red-700" : "bg-stone-900"
-              }`}
-            >
-              {listening ? "Stop" : "Start talking"}
-            </button>
-          ) : (
-            <p className="font-sans text-sm text-amber-800">
-              Voice input is not supported by this browser. You can still type below.
-            </p>
-          )}
+          <button
+            type="button"
+            onClick={() => void voice.toggle()}
+            disabled={voice.isTranscribing}
+            aria-pressed={voice.isRecording}
+            className={`mx-auto flex size-24 items-center justify-center rounded-full font-sans text-sm font-medium text-white shadow-sm transition disabled:opacity-50 ${
+              voice.isRecording ? "animate-pulse bg-red-700" : "bg-stone-900"
+            }`}
+          >
+            {voice.isTranscribing ? "Working…" : voice.isRecording ? "Stop" : "Start talking"}
+          </button>
           <p className="mt-3 font-sans text-sm text-stone-500" aria-live="polite">
-            {listening ? "Listening… tap when you are done." : "Nothing is saved until you review and tap Save."}
+            {voice.isRecording
+              ? `Recording ${Math.floor(voice.elapsedSeconds / 60)}:${String(voice.elapsedSeconds % 60).padStart(2, "0")} · tap when done`
+              : voice.status || "Nothing is saved until you review and tap Save."}
           </p>
         </div>
 
         <label className="mt-6 block font-sans text-sm">
           Your debrief
           <textarea
-            value={transcript}
-            onChange={(event) => setTranscript(event.target.value)}
+            value={voice.transcript}
+            onChange={(event) => voice.setTranscript(event.target.value)}
             rows={7}
             maxLength={10_000}
             placeholder="What happened? Include promises, interests you discovered, and next steps."
             className="mt-2 w-full rounded-xl border border-stone-300 bg-stone-50 px-4 py-3 text-base leading-relaxed"
           />
         </label>
-        {interim ? (
+        {voice.interim ? (
           <p className="mt-2 font-sans text-sm italic text-stone-500" aria-live="polite">
-            {interim}
+            {voice.interim}
           </p>
         ) : null}
 
+        {voice.error ? <p role="alert" className="mt-4 font-sans text-sm text-red-800">{voice.error}</p> : null}
         {error ? <p role="alert" className="mt-4 font-sans text-sm text-red-800">{error}</p> : null}
         {message ? <p role="status" className="mt-4 font-sans text-sm text-green-800">{message}</p> : null}
 

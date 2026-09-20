@@ -3,7 +3,15 @@ import { fetchGraph } from "../api"
 import { RelationshipGraph } from "../components/RelationshipGraph"
 import type { GraphNodeData, GraphResponse } from "../types"
 
-export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:string})=>void}) {
+export function GraphPage({
+  onResearch,
+  onPractice,
+  onBrainDump,
+}: {
+  onResearch: (person: { id: string; name: string }) => void
+  onPractice: (person: { id: string; name: string }) => void
+  onBrainDump: (person: { id: string; name: string }) => void
+}) {
   const [graph, setGraph] = useState<GraphResponse | null>(null)
   const [selected, setSelected] = useState<(GraphNodeData & { id: string }) | null>(
     null,
@@ -58,7 +66,28 @@ export function GraphPage({onResearch}:{onResearch:(person:{id:string;name:strin
               <p className="mt-3 text-sm text-stone-700">
                 {selected.bio || selected.description || "No description yet."}
               </p>
-              {selected.kind === "person" && <button className="mt-4 rounded-full bg-stone-900 px-4 py-2 text-sm text-white" onClick={()=>onResearch({id:selected.id.replace(/^person:/,""),name:selected.name})}>Prepare coffee chat</button>}
+              {selected.kind === "person" ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    className="rounded-full bg-stone-900 px-4 py-2 text-sm text-white"
+                    onClick={() => onPractice({ id: selected.id.replace(/^person:/, ""), name: selected.name })}
+                  >
+                    Practice conversation
+                  </button>
+                  <button
+                    className="rounded-full border border-stone-400 px-4 py-2 text-sm"
+                    onClick={() => onResearch({ id: selected.id.replace(/^person:/, ""), name: selected.name })}
+                  >
+                    Research
+                  </button>
+                  <button
+                    className="rounded-full border border-stone-400 px-4 py-2 text-sm"
+                    onClick={() => onBrainDump({ id: selected.id.replace(/^person:/, ""), name: selected.name })}
+                  >
+                    Brain Dump
+                  </button>
+                </div>
+              ) : null}
               {selected.interests?.length ? (
                 <p className="mt-4 font-sans text-sm">
                   Interests: {selected.interests.join(", ")}

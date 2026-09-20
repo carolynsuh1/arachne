@@ -37,6 +37,7 @@ export type GraphNodeData = {
   location?: string | null
   companies?: string[]
   affiliations?: string[]
+  suggested?: boolean
 }
 
 export type GraphNode = {
@@ -116,4 +117,76 @@ export type InteractionMemory = {
   transcript: string
   happened_at: string
   created_at: string
+}
+
+export type BrainDumpCard = {
+  category: string
+  text: string
+  selected: boolean
+}
+
+export type SuggestedIntroduction = {
+  name: string
+  affiliation: string
+  context: string
+  existing_person_id?: string | null
+}
+
+export type Reminder = {
+  id: string
+  person_id: string
+  interaction_id: string | null
+  action: string
+  due_at: string | null
+  status: "upcoming" | "completed" | "overdue"
+  notes: string
+}
+
+export type WhoNext = {
+  person_id: string
+  name: string
+  reason: string
+  path: string[]
+  suggested_action: string
+}
+
+export type ConversationMessage = {
+  role: "user" | "assistant"
+  content: string
+}
+
+export type HighlightEvent = {
+  type: "node" | "edge"
+  node_id?: string
+  edge_id?: string
+  source?: string
+  target?: string
+  at_ms: number
+  duration_ms: number
+  note: string
+}
+
+export type VoicePayload = {
+  spoken_text: string
+  audio_base64: string | null
+  audio_mime_type: string | null
+  voice_status: string
+}
+
+export type CopilotTurn = VoicePayload & {
+  answer: string
+  cited_people: { id: string; node_id: string; name: string }[]
+  highlight_events: HighlightEvent[]
+}
+
+export type PracticeTurn = VoicePayload & {
+  reply: string
+  person: GraphNodeData & { id: string; focus: string; memories: string[] }
+}
+
+export type PracticeFeedback = {
+  topics_connected: string
+  missed_opportunity: string
+  suggested_follow_up: string
+  next_action: string
 }

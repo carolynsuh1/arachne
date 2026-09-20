@@ -104,3 +104,27 @@ class InteractionMemory(Base):
     transcript: Mapped[str] = mapped_column(Text, nullable=False)
     happened_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class BrainDumpItem(Base):
+    __tablename__ = "brain_dump_items"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    interaction_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    person_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    interaction_id: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String, default="upcoming")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

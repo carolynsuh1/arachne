@@ -48,6 +48,7 @@ class GraphNodeData(BaseModel):
     location: str | None = None
     companies: list[str] = []
     affiliations: list[str] = []
+    suggested: bool = False
 
 
 class GraphNode(BaseModel):
@@ -138,3 +139,81 @@ class InteractionMemoryOut(BaseModel):
     transcript: str
     happened_at: datetime
     created_at: datetime
+
+
+class BrainDumpCard(BaseModel):
+    category: str
+    text: str
+    selected: bool = True
+
+
+class SuggestedIntroduction(BaseModel):
+    name: str
+    affiliation: str = ""
+    context: str
+    existing_person_id: str | None = None
+
+
+class BrainDumpExtractIn(BaseModel):
+    person_id: str
+    transcript: str = Field(min_length=1, max_length=10_000)
+    happened_at: datetime | None = None
+
+
+class BrainDumpExtraction(BaseModel):
+    cards: list[BrainDumpCard]
+    introductions: list[SuggestedIntroduction] = []
+    spoken_summary: str
+    provider: str
+
+
+class BrainDumpConfirmIn(BrainDumpExtractIn):
+    cards: list[BrainDumpCard]
+    introductions: list[SuggestedIntroduction] = []
+
+
+class ReminderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    person_id: str
+    interaction_id: str | None
+    action: str
+    due_at: datetime | None
+    status: str
+    notes: str
+
+
+class BrainDumpConfirmOut(BaseModel):
+    interaction: InteractionMemoryOut
+    reminders: list[ReminderOut]
+    created_people: list[str]
+    spoken_summary: str
+
+
+class ReminderCreate(BaseModel):
+    person_id: str
+    action: str = Field(min_length=1, max_length=500)
+    due_at: datetime | None = None
+    interaction_id: str | None = None
+    notes: str = ""
+
+
+class WhoNextOut(BaseModel):
+    person_id: str
+    name: str
+    reason: str
+    path: list[str]
+    suggested_action: str
+
+
+class BrainDumpActionIn(BaseModel):
+    person_id: str
+    text: str = Field(min_length=1, max_length=500)
+    interaction_id: str | None = None
+
+
+class BrainDumpActionOut(BaseModel):
+    message: str
+    reminder: ReminderOut | None = None
+    recommendations: list[WhoNextOut] = []

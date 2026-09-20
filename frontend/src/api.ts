@@ -3,11 +3,19 @@ import type {
   GoalNetworkResult,
   GraphResponse,
   InteractionMemory,
+  BrainDumpCard,
+  Reminder,
+  SuggestedIntroduction,
+  WhoNext,
   NetworkTracker,
+  ConversationMessage,
+  CopilotTurn,
+  PracticeFeedback,
+  PracticeTurn,
   SyncResponse,
 } from "./types"
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000"
+const API_URL = import.meta.env.VITE_API_URL ?? "/api"
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
@@ -75,6 +83,63 @@ export function createInteraction(input: {
   return request<InteractionMemory>("/interactions", {
     method: "POST",
     body: JSON.stringify(input),
+  })
+}
+
+export function extractBrainDump(input: { person_id: string; transcript: string; happened_at?: string }) {
+  return request<{cards: BrainDumpCard[]; introductions: SuggestedIntroduction[]; spoken_summary: string; provider: string}>("/brain-dumps/extract", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+}
+
+export function confirmBrainDump(input: { person_id: string; transcript: string; happened_at?: string; cards: BrainDumpCard[]; introductions: SuggestedIntroduction[] }) {
+  return request<{interaction: InteractionMemory; reminders: Reminder[]; created_people: string[]; spoken_summary: string}>("/brain-dumps/confirm", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+}
+
+export function fetchUpcoming() {
+  return request<Reminder[]>("/brain-dumps/upcoming")
+}
+
+export function fetchWhoNext() {
+  return request<WhoNext[]>("/brain-dumps/who-next")
+}
+
+export function sendBrainDumpAction(input: {person_id: string; text: string; interaction_id?: string}) {
+  return request<{message: string; reminder: Reminder | null; recommendations: WhoNext[]}>("/brain-dumps/actions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+}
+
+export function askCopilot(question: string, history: ConversationMessage[]) {
+  return request<CopilotTurn>("/copilot/turn", {
+    method: "POST",
+    body: JSON.stringify({ question, history }),
+  })
+}
+
+export function practiceTurn(
+  personId: string,
+  message: string,
+  history: ConversationMessage[],
+) {
+  return request<PracticeTurn>("/copilot/practice/turn", {
+    method: "POST",
+    body: JSON.stringify({ person_id: personId, message, history }),
+  })
+}
+
+export function practiceFeedback(
+  personId: string,
+  transcript: ConversationMessage[],
+) {
+  return request<PracticeFeedback>("/copilot/practice/feedback", {
+    method: "POST",
+    body: JSON.stringify({ person_id: personId, transcript }),
   })
 }
 
