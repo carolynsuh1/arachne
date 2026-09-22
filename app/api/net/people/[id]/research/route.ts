@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { saveResearchPhoto } from "@/lib/research-photo";
 import { jsonError, zodFields } from "@/lib/http";
 import { personRoute, teamErrorResponse, type Params } from "@/lib/person-route";
 import { tooManyAttempts } from "@/lib/rateLimit";
@@ -42,6 +43,7 @@ export async function POST(req: Request, { params }: Params) {
       viewer_profile_id: viewer ?? undefined,
       profileUrl: parsed.data.profileUrl,
     });
+    if (result.status === "ready") await saveResearchPhoto(ctx.person.id, result.profile?.photoUrl);
     return NextResponse.json({ result });
   } catch (error) {
     return teamErrorResponse(error);

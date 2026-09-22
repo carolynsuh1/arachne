@@ -124,6 +124,7 @@ export const getTracker = () => teamFetch<{ people: TrackerPerson[] }>("/network
 // ---- Phase 3: per-person features ----
 
 export type ResearchResult = {
+  profile?: { photoUrl?: string };
   status: string;
   person: string;
   coverage?: string;
